@@ -24,8 +24,14 @@ with col2:
 initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
 run_button = st.button("Run Unfolding")
 
+st.write("Tipo response_file:", type(response_file))
+st.write("Tipo counts_file:", type(counts_file))
+st.write("Tipo energy_file:", type(energy_file))
+st.write("Tipo energy_file:", type(guess_file))
+
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
+    st.write("✅ Tutti i file sono stati caricati, chiamo la funzione...")
     R,data = response_matrix(response_file,counts_file,energy_file)
 
     energies = np.loadtxt(energy_file)

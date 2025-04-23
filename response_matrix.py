@@ -4,7 +4,7 @@ import streamlit as st
 
 def response_matrix(response_file,counts_file,energy_file):
     #st.write("✅ Caricamento della matrice di risposta...")
-    R = np.loadtxt(response_file)
+    R = np.loadtxt(response_file, delimiter='\t')
 
     #st.write("✅ Trasposizione della matrice...")
     R = R.T
@@ -19,7 +19,7 @@ def response_matrix(response_file,counts_file,energy_file):
     data = data_full[funz]
     
     #st.write("✅ Caricamento delle energie...")
-    energies = np.loadtxt(energy_file)
+    energies = np.loadtxt(energy_file,delimiter='\t')
     
     if energies.shape[1] < 3:
         st.error("❌ Il file delle energie deve avere almeno 3 colonne. Controlla che sia nel formato giusto.")
@@ -36,11 +36,11 @@ def response_matrix(response_file,counts_file,energy_file):
         plt.ylabel("Detector response per unit fluence [optph cm2]")
         plt.legend()
         plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-        plt.axvline(x=0.5e-6, color='r', linestyle='--', label="0.5")
-        
+    
+    plt.axvline(x=0.5e-6, color='r', linestyle='--', label="0.5")   
     st.pyplot(plt.gcf())  # Mostra il grafico nella webapp
 
-    st.success("✅ Matrice e dati caricati con successo.")
+    st.success("✅ Response matrix and datas succesfully uploaded.")
     
     return R,data
     

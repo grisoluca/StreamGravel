@@ -26,7 +26,7 @@ run_button = st.button("Run Unfolding")
 
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
-    R,data = response_matrix(response_file,counts_file,energy)
+    R,data = response_matrix(response_file,counts_file,energy_file)
 
     energies = np.loadtxt(energy_file)
     xbins = energies[:, 2]  # bin centrali

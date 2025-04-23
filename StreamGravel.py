@@ -7,7 +7,7 @@ from rebin import rebin
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
 
-st.markdown("Upload i file necessari per l'unfolding:")
+st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
 # File uploader
 col1, col2 = st.columns(2)
@@ -20,8 +20,8 @@ with col2:
     energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
     guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
 
-initial_guess_type = st.selectbox("Tipo di guess iniziale:", ["Costante", "Da file"])
-run_button = st.button("Esegui unfolding")
+initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+run_button = st.button("Run Unfolding")
 
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
@@ -91,5 +91,5 @@ if run_button and response_file and energy_file and counts_file and guess_file:
 
     st.metric(label="Errore relativo normalizzato", value=f"{rel_norm:.4f}")
 else:
-    st.info("Carica tutti i file e premi 'Esegui unfolding' per iniziare.")
+    st.info("Upload all files and click on 'Run Unfolding' to start.")
 

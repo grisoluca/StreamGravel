@@ -27,7 +27,7 @@ tol = st.number_input(
     "🔍 Soglia di arresto (tolleranza su ΔJ)", 
     min_value=1e-12, 
     max_value=1.0, 
-    value=1e-9, 
+    value=1e-7, 
     step=1e-9, 
     format="%.1e"
 )

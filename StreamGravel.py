@@ -79,19 +79,19 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     st.pyplot(fig1)
 
     # --- Plot errore di convergenza
-    fig2, ax2 = plt.subplots()
-    ax2.plot(np.arange(len(errorg)), errorg, color="k", label="GRAVEL")
-    ax2.axhline(tol, color="r", linestyle="--", linewidth=0.75)
-    ax2.set_ylabel("$\\Delta J$")
-    ax2.set_xlabel("Iteration")
-    ax2.grid(True, which="both", ls=":")
-    ax2.legend()
+    #fig2, ax2 = plt.subplots()
+    #ax2.plot(np.arange(len(errorg)), errorg, color="k", label="GRAVEL")
+    #ax2.axhline(tol, color="r", linestyle="--", linewidth=0.75)
+    #ax2.set_ylabel("$\\Delta J$")
+    #ax2.set_xlabel("Iteration")
+    #ax2.grid(True, which="both", ls=":")
+    #ax2.legend()
     #st.pyplot(fig2)
 
     # --- Calcolo errore relativo
-    nonzero_mask = xguess != 0
-    diff_g = abs(xguess[nonzero_mask] - xg[nonzero_mask]) / xguess[nonzero_mask]
-    rel_norm = np.linalg.norm(diff_g)
+    #nonzero_mask = xguess != 0
+    #diff_g = abs(xguess[nonzero_mask] - xg[nonzero_mask]) / xguess[nonzero_mask]
+    #rel_norm = np.linalg.norm(diff_g)
 
     #st.metric(label="Normalized Relative error", value=f"{rel_norm:.4f}")
 else:

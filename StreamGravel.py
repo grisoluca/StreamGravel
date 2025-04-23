@@ -38,14 +38,14 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     energies = np.loadtxt(energy_file, delimiter='\t')
     xbins = energies[:, 2]  # bin centrali
     
-
-    guess_spect = np.loadtxt(guess_file, delimiter='\t')
     guess_file.seek(0)
+    guess_spect = np.loadtxt(guess_file, delimiter='\t')
+    
     xbins_guess = guess_spect[:, 0]
     xguess_raw = guess_spect[:, 1]
 
     if len(xguess_raw) != R.shape[1]:
-        xbins, xguess = rebin(xbins_guess, xguess_raw)
+        xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file)
     else:
         xguess = xguess_raw
 
@@ -62,7 +62,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
         tol = 0.8
         suffix = "guess"
 
-    xg, errorg = gravel(R, data, xguess.copy(), tol)
+    xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file)
 
     # Normalizzazione
     xguess /= np.sum(xguess)
@@ -86,13 +86,13 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     ax2.set_xlabel("Iteration")
     ax2.grid(True, which="both", ls=":")
     ax2.legend()
-    st.pyplot(fig2)
+    #st.pyplot(fig2)
 
     # --- Calcolo errore relativo
     nonzero_mask = xguess != 0
     diff_g = abs(xguess[nonzero_mask] - xg[nonzero_mask]) / xguess[nonzero_mask]
     rel_norm = np.linalg.norm(diff_g)
 
-    st.metric(label="Normalized Relative error", value=f"{rel_norm:.4f}")
+    #st.metric(label="Normalized Relative error", value=f"{rel_norm:.4f}")
 else:
     st.info("Upload all files and click on 'Run Unfolding' to start.")

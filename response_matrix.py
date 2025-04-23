@@ -5,7 +5,6 @@ import streamlit as st
 def response_matrix(response_file,counts_file,energy_file):
     #st.write("✅ Caricamento della matrice di risposta...")
     R = np.loadtxt(response_file, delimiter='\t')
-    response_file.seek(0)
 
     #st.write("✅ Trasposizione della matrice...")
     R = R.T
@@ -17,12 +16,12 @@ def response_matrix(response_file,counts_file,energy_file):
     
     #st.write("✅ Caricamento dei conteggi...")
     data_full = np.loadtxt(counts_file)
-    counts_file.seek(0)
     data = data_full[funz]
     
     #st.write("✅ Caricamento delle energie...")
-    energies = np.loadtxt(energy_file,delimiter='\t')
     energy_file.seek(0)
+    energies = np.loadtxt(energy_file,delimiter='\t')
+    
     
     if energies.shape[1] < 3:
         st.error("❌ Il file delle energie deve avere almeno 3 colonne. Controlla che sia nel formato giusto.")

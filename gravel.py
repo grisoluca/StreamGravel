@@ -1,8 +1,9 @@
 import numpy as np
 from numpy import log,exp
 import matplotlib.pyplot as plt
+import streamlit as st
 
-def gravel(R,data,x,tolerance):
+def gravel(R,data,x,tolerance,energy_file):
     """
     R --> Response matrix, shape is (n,m)
     N --> data from each detector, shape is (n,)
@@ -21,8 +22,8 @@ def gravel(R,data,x,tolerance):
     error = []
     stepcount = 1
     
-    dir = "unfolding_inputs/"
-    energies = np.loadtxt(dir+"response_M_energies.txt")
+    energy_file.seek(0)
+    energies = np.loadtxt(energy_file, delimiter='\t')
     E_bin_sx = energies[:,0] # bin sx
     E_bin_dx = energies[:,1] # bin dx
     #E_new = energies[:, 2] # bin centrale
@@ -59,6 +60,6 @@ def gravel(R,data,x,tolerance):
     plt.plot(data,label = "measured")
     plt.plot(rdot,label = "evaluated")
     plt.legend()
-    plt.show()
+    st.pyplot(plt.gcf())
 
     return(x,np.array(error))

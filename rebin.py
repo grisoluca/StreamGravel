@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+import streamlit as st
 
-def rebin(E_old,S_old):
+def rebin(E_old,S_old,energy_file):
     
     # Interpolazione
     interp_func = interp1d(E_old, S_old, kind='linear', fill_value=0.0, bounds_error=False)
     
-    dir = "unfolding_inputs/"
-    energies = np.loadtxt(dir+"response_M_energies.txt")
+    energy_file.seek(0)
+    energies = np.loadtxt(energy_file, delimiter='\t')
     #E_bin_sx = energies[:,0] # bin sx
     #E_bin_dx = energies[:,1] # bin dx
     E_new = energies[:,2] # bin centrale
@@ -27,6 +28,6 @@ def rebin(E_old,S_old):
     plt.legend()
     plt.grid(True)
     plt.title('Rebinning dello spettro')
-    plt.show()
+    st.pyplot(plt.gcf())
 
     return(E_new,S_new)

@@ -2,18 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def response_matrix():
+def response_matrix(response_file,counts_file,energy_file):
         
-    dir = "unfolding_inputs/"
-    R = np.loadtxt(dir+"response_matrix_DirSpe.txt", delimiter='\t')
+
+    R = np.loadtxt(response_file)
     # R.shape sarà (60, 10)
     R = R.T #ora R.shape è (10,60)
     funz = [0,1,2,3,4,5,6,7,8,9]
     stop = len(funz)
     R = R[funz,:]
     
-    dir = "unfolding_inputs/"
-    energies = np.loadtxt(dir+"response_M_energies.txt")
+    data_full = np.loadtxt(counts_file)
+    data = data_full[funz]
+    
+    energies = np.loadtxt(energy_file)
     E_new = energies[:,2] # bin centrale
     
     for i in range(stop):
@@ -30,5 +32,5 @@ def response_matrix():
     # Mostra il grafico
     plt.show()
     
-    return R
+    return R,data
     

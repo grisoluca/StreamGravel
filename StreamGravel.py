@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gravel import gravel
 from rebin import rebin
+from response_matrix import response_matrix
 
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
@@ -25,13 +26,11 @@ run_button = st.button("Run Unfolding")
 
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
-    R = response_matrix(response_file)
+    R,data = response_matrix(response_file,counts_file,energy)
 
     energies = np.loadtxt(energy_file)
     xbins = energies[:, 2]  # bin centrali
-
-    data_full = np.loadtxt(counts_file)
-    data = data_full[funz]
+    
 
     guess_spect = np.loadtxt(guess_file)
     xbins_guess = guess_spect[:, 0]
@@ -86,6 +85,6 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     diff_g = abs(xguess[nonzero_mask] - xg[nonzero_mask]) / xguess[nonzero_mask]
     rel_norm = np.linalg.norm(diff_g)
 
-    st.metric(label="Errore relativo normalizzato", value=f"{rel_norm:.4f}")
+    st.metric(label="Normalized Relative error", value=f"{rel_norm:.4f}")
 else:
     st.info("Upload all files and click on 'Run Unfolding' to start.")

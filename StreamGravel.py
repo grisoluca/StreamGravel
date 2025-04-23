@@ -25,10 +25,7 @@ run_button = st.button("Run Unfolding")
 
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
-    R_raw = np.loadtxt(response_file, delimiter='\t')
-    R = R_raw.T
-    funz = [0,2,4,6,8]
-    R = R[funz, :]
+    R = response_matrix(response_file)
 
     energies = np.loadtxt(energy_file)
     xbins = energies[:, 2]  # bin centrali
@@ -50,7 +47,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     mask = (xbins > 1e-8) & (xbins < 1)
     x_const[mask] = 1 / xbins[mask]
 
-    if initial_guess_type == "Costante":
+    if initial_guess_type == "Constant":
         tol = 1e-9
         xguess = x_const
         suffix = "constant"

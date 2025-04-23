@@ -22,6 +22,16 @@ with col2:
     guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
 
 initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+    
+tol = st.number_input(
+    "🔍 Soglia di arresto (tolleranza su ΔJ)", 
+    min_value=1e-12, 
+    max_value=1.0, 
+    value=1e-9, 
+    step=1e-9, 
+    format="%.1e"
+)
+
 run_button = st.button("Run Unfolding")
 
 #st.write("Tipo response_file:", type(response_file))
@@ -54,15 +64,6 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     mask = (xbins > 1e-8) & (xbins < 1)
     x_const[mask] = 1 / xbins[mask]
     
-    
-    tol = st.number_input(
-    "🔍 Soglia di arresto (tolleranza su ΔJ)", 
-    min_value=1e-12, 
-    max_value=1.0, 
-    value=1e-9, 
-    step=1e-9, 
-    format="%.1e"
-)
     
     if initial_guess_type == "Constant":
         xguess = x_const

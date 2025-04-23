@@ -38,7 +38,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     xbins = energies[:, 2]  # bin centrali
     
 
-    guess_spect = np.loadtxt(guess_file)
+    guess_spect = np.loadtxt(guess_file, delimiter='\t')
     xbins_guess = guess_spect[:, 0]
     xguess_raw = guess_spect[:, 1]
 

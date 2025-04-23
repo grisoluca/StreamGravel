@@ -57,9 +57,10 @@ def gravel(R,data,x,tolerance,energy_file):
         stepcount += 1
         dJ0 = dJ
         
-    plt.plot(data,label = "measured")
-    plt.plot(rdot,label = "evaluated")
-    plt.legend()
-    st.pyplot(plt.gcf())
+    figC, axC = plt.subplots()
+    axC.plot(data, label="measured")
+    axC.plot(rdot, label="evaluated")
+    axC.legend()
+    st.pyplot(figC)
 
     return(x,np.array(error))

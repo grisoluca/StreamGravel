@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import streamlit as st
 
 def response_matrix(response_file,counts_file,energy_file):
         
@@ -30,7 +30,7 @@ def response_matrix(response_file,counts_file,energy_file):
     plt.grid(True, which="both", linestyle="--", linewidth=0.5)
     plt.axvline(x=0.5e-6, color='r', linestyle='--', label="0.5")
     # Mostra il grafico
-    plt.show()
+    st.pyplot(plt.gcf())  # mostra la figura nel frontend di Streamlit
     
     return R,data
     

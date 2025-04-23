@@ -34,7 +34,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
     R,data = response_matrix(response_file,counts_file,energy_file)
 
-    energies = np.loadtxt(energy_file, delimiter='\t')
+    energies = np.genfromtxt(energy_file, delimiter='\t')
     xbins = energies[:, 2]  # bin centrali
     
 

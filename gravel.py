@@ -29,7 +29,7 @@ def gravel(R,data,x,tolerance,energy_file):
     #E_new = energies[:, 2] # bin centrale
     dE = E_bin_dx-E_bin_sx
     
-    log = ""
+    logIter = ""
     
     while ddJ > tolerance:
         W = np.zeros((n,m))
@@ -55,12 +55,12 @@ def gravel(R,data,x,tolerance,energy_file):
         ddJ = abs(dJ-dJ0)
         J0 = J
         error.append(ddJ)
-        log += f"Iteration {stepcount}, ddJ = {ddJ:.2e}\n"
+        logIter += f"Iteration {stepcount}, ddJ = {ddJ:.2e}\n"
         stepcount += 1
         dJ0 = dJ
         
     with st.expander("📘 Iteration log"):
-        st.text_area("Output GRAVEL", log, height=300)    
+        st.text_area("Output GRAVEL", logIter, height=300)    
     
     figC, axC = plt.subplots()
     axC.plot(data, label="measured")

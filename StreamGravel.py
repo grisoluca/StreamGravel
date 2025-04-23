@@ -53,13 +53,21 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     x_const = np.zeros((m,))
     mask = (xbins > 1e-8) & (xbins < 1)
     x_const[mask] = 1 / xbins[mask]
-
+    
+    
+    tol = st.number_input(
+    "🔍 Soglia di arresto (tolleranza su ΔJ)", 
+    min_value=1e-12, 
+    max_value=1.0, 
+    value=1e-9, 
+    step=1e-9, 
+    format="%.1e"
+)
+    
     if initial_guess_type == "Constant":
-        tol = 1e-9
         xguess = x_const
         suffix = "constant"
     else:
-        tol = 0.8
         suffix = "guess"
 
     xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file)

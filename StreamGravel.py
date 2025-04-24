@@ -11,15 +11,15 @@ st.title("GRAVEL Neutron Spectrum Unfolding")
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
 # File uploader
-col1, col2 = st.columns(2)
+with st.container ():
+    col_u1, col_u2 = st.columns(2)
+    with col_u1:
+        response_file = st.file_uploader("📁 Response matrix (TXT, Response Function for each column, tab-separated)", type="txt")
+        counts_file = st.file_uploader("📈 Measured counts, in column (TXT)", type="txt")
 
-with col1:
-    response_file = st.file_uploader("📁 Response matrix (TXT, Response Function for each column, tab-separated)", type="txt")
-    counts_file = st.file_uploader("📈 Measured counts, in column (TXT)", type="txt")
-
-with col2:
-    energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
-    guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
+    with col_u2:
+        energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
+        guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
 
 initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
     
@@ -40,6 +40,9 @@ run_button = st.button("Run Unfolding")
 #st.write("Tipo energy_file:", type(guess_file))
 
 if run_button and response_file and energy_file and counts_file and guess_file:
+    
+    col1, col2 = st.columns(2)
+
     # Caricamento dati
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
     R,data = response_matrix(response_file,counts_file,energy_file,col1)

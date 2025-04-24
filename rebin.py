@@ -20,7 +20,7 @@ def rebin(E_old,S_old,energy_file,col):
     S_interp = interp_func(E_interp)
     
     # Plot per confronto visivo
-    figInt, axInt = plt.subplots()
+    figInt, axInt = plt.subplots(figsize=(6, 4))
     axInt.semilogx(E_old, S_old * E_old, 'o', label='Originale (35)')
     axInt.semilogx(E_new, S_new * E_new, 'x-', label='Interpolato (60)')
     axInt.semilogx(E_interp, S_interp * E_interp, '-', label='funz con')

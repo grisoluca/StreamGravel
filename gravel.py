@@ -62,7 +62,7 @@ def gravel(R,data,x,tolerance,energy_file,col):
     with st.expander("📘 Iteration log"):
         st.text_area("Output GRAVEL", logIter, height=300)    
     
-    figC, axC = plt.subplots()
+    figC, axC = plt.subplots(figsize=(6, 4))
     axC.plot(data, label="measured")
     axC.plot(rdot, label="evaluated")
     axC.legend()

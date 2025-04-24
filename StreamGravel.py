@@ -81,7 +81,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     xg /= np.sum(xg)
 
     # --- Plot risultati
-    fig1, ax1 = plt.subplots()
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
     ax1.semilogx(xbins, xguess * xbins, label="Guess Spectrum")
     ax1.semilogx(xbins, xg * xbins, label="GRAVEL")
     ax1.set_xlabel("Neutron Energy (MeV)")

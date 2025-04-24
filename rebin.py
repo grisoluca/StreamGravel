@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import streamlit as st
 
-def rebin(E_old,S_old,energy_file):
+def rebin(E_old,S_old,energy_file,col):
     
     # Interpolazione
     interp_func = interp1d(E_old, S_old, kind='linear', fill_value=0.0, bounds_error=False)
@@ -29,6 +29,6 @@ def rebin(E_old,S_old,energy_file):
     axInt.set_title('Rebinning dello spettro')
     axInt.grid(True)
     axInt.legend()
-    st.pyplot(figInt)
+    col.pyplot(figInt)
 
     return(E_new,S_new)

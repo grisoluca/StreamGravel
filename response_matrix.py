@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def response_matrix(response_file,counts_file,energy_file):
+def response_matrix(response_file,counts_file,energy_file,col):
     #st.write("✅ Caricamento della matrice di risposta...")
     R = np.loadtxt(response_file, delimiter='\t')
 
@@ -30,17 +30,19 @@ def response_matrix(response_file,counts_file,energy_file):
     E_new = energies[:, 2]  # bin centrali
     
     #st.write("✅ Plotting...")
+    figRM, axRM = plt.subplots()  # puoi cambiare le dimensioni se vuoi
+
     for i in range(stop):
-        plt.plot(E_new, R[i, :], marker='o', linestyle='-', label=f"Scint {i+1}")
-        
-        plt.xscale("log")
-        plt.xlabel("Energy [MeV]")
-        plt.ylabel("Detector response per unit fluence [optph cm2]")
-        plt.legend()
-        plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-    
-    plt.axvline(x=0.5e-6, color='r', linestyle='--', label="0.5")   
-    st.pyplot(plt.gcf())  # Mostra il grafico nella webapp
+        axRM.plot(E_new, R[i, :], marker='o', linestyle='-', label=f"Scint {i+1}")
+
+    axRM.set_xscale("log")
+    axRM.set_xlabel("Energy [MeV]")
+    axRM.set_ylabel("Detector response per unit fluence [optph cm2]")
+    axRM.legend()
+    axRM.grid(True, which="both", linestyle="--", linewidth=0.5)
+    axRM.axvline(x=0.5e-6, color='r', linestyle='--', label="0.5")
+
+    col.pyplot(figRM)  # Mostra la figura nella colonna specificata
 
     st.success("✅ Response matrix and datas succesfully uploaded.")
     

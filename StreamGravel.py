@@ -42,7 +42,7 @@ run_button = st.button("Run Unfolding")
 if run_button and response_file and energy_file and counts_file and guess_file:
     # Caricamento dati
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
-    R,data = response_matrix(response_file,counts_file,energy_file)
+    R,data = response_matrix(response_file,counts_file,energy_file,col1)
     
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
@@ -55,7 +55,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     xguess_raw = guess_spect[:, 1]
 
     if len(xguess_raw) != R.shape[1]:
-        xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file)
+        xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,col2)
     else:
         xguess = xguess_raw
 
@@ -71,7 +71,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     else:
         suffix = "guess"
 
-    xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file)
+    xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,col1)
 
     # Normalizzazione
     xguess /= np.sum(xguess)
@@ -85,7 +85,7 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     ax1.set_ylabel("Normalized Counts")
     ax1.grid(True, which="both", ls="--", alpha=0.5)
     ax1.legend()
-    st.pyplot(fig1)
+    col2.pyplot(fig1)
 
     # --- Plot errore di convergenza
     #fig2, ax2 = plt.subplots()

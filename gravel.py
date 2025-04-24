@@ -3,7 +3,7 @@ from numpy import log,exp
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def gravel(R,data,x,tolerance,energy_file):
+def gravel(R,data,x,tolerance,energy_file,col):
     """
     R --> Response matrix, shape is (n,m)
     N --> data from each detector, shape is (n,)
@@ -66,6 +66,6 @@ def gravel(R,data,x,tolerance,energy_file):
     axC.plot(data, label="measured")
     axC.plot(rdot, label="evaluated")
     axC.legend()
-    st.pyplot(figC)
+    col.pyplot(figC)
 
     return(x,np.array(error))

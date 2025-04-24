@@ -30,7 +30,7 @@ def response_matrix(response_file,counts_file,energy_file,col):
     E_new = energies[:, 2]  # bin centrali
     
     #st.write("✅ Plotting...")
-    figRM, axRM = plt.subplots(figsize=(6, 4))  # puoi cambiare le dimensioni se vuoi
+    figRM, axRM = plt.subplots(figsize=(6, 4), layout='constrained')  # puoi cambiare le dimensioni se vuoi
 
     for i in range(stop):
         axRM.plot(E_new, R[i, :], marker='o', linestyle='-', label=f"Scint {i+1}")

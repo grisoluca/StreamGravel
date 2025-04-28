@@ -34,37 +34,44 @@ tol = st.number_input(
 
 #run_button = st.button("Run Unfolding")
 
-load_matrices_button = st.button("Load Response matrix and go to Detector Selection")
-#st.write("Tipo response_file:", type(response_file))
-#st.write("Tipo counts_file:", type(counts_file))
-#st.write("Tipo energy_file:", type(energy_file))
-#st.write("Tipo energy_file:", type(guess_file))
+# -- Assicura che lo stato sia inizializzato
+if 'load_matrices_clicked' not in st.session_state:
+    st.session_state.load_matrices_clicked = False
 
-if load_matrices_button and response_file and energy_file and counts_file and guess_file:
+if st.button("🚀 Carica matrici e seleziona detector"):
+    st.session_state.load_matrices_clicked = True
+
+# Ora, solo se i file sono caricati
+if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_file:
     
     col1, col2 = st.columns(2)
+    
+    # Solo se non già caricate
+    if 'R' not in st.session_state:
+        # Carica e salva in session_state
+        R, data = response_matrix(response_file, counts_file, energy_file)
+        st.session_state.R = R
+        st.session_state.data = data
 
-    # Caricamento dati
-    #st.write("✅ Tutti i file sono stati caricati correttamente...")
-    R,data = response_matrix(response_file,counts_file,energy_file,col1)
-    
-    
+    R = st.session_state.R
+    data = st.session_state.data
+
     num_detectors = R.shape[0]
     detectors_list = list(range(num_detectors))
-    
-    # --- Salva la lista dei detector selezionati in session_state
+
+    # -- Gestione checkbox: salva stato
     if 'detector_states' not in st.session_state:
         st.session_state.detector_states = {i: True for i in detectors_list}
-    
+
+    st.subheader("📦 Attiva/disattiva funzioni di risposta:")
+
     for i in detectors_list:
-        # Ogni checkbox aggiorna direttamente il session_state
         st.session_state.detector_states[i] = st.checkbox(
             f"Funzione di risposta {i}",
             value=st.session_state.detector_states[i],
             key=f"detector_{i}"
         )
 
-    # Recupero quali sono attivi
     selected_detectors = [i for i in detectors_list if st.session_state.detector_states[i]]
 
     if not selected_detectors:

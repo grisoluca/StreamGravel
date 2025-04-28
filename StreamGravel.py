@@ -47,6 +47,24 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
     R,data = response_matrix(response_file,counts_file,energy_file,col1)
     
+    # --- NUOVA PARTE: Selezione detector
+    num_detectors = R.shape[0]
+    detectors_list = list(range(num_detectors))
+
+    selected_detectors = st.multiselect(
+         "📦 Seleziona le funzioni di risposta da usare:",
+         detectors_list,
+         default=detectors_list  # di default tutte selezionate
+         )
+
+    if not selected_detectors:
+         st.warning("⚠️ Devi selezionare almeno una funzione di risposta.")
+         st.stop()
+
+    # Filtro matrice e dati in base alla selezione
+    R = R[selected_detectors, :]
+    data = data[selected_detectors]
+    
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
     xbins = energies[:, 2]  # bin centrali

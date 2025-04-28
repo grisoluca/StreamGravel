@@ -89,14 +89,14 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     E_new = energies[:, 2]
 
     for idx in selected_detectors:
-        ax_preview.plot(E_new, R[idx, :], label=f"Detector {idx}")
+        ax_preview.plot(E_new, R[idx, :], marker='o', linestyle='-', label=f"Detector {idx}")
 
     ax_preview.set_xscale("log")
     ax_preview.set_xlabel("Energy [MeV]")
     ax_preview.set_ylabel("Response (a.u.)")
     ax_preview.legend()
     ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
-    col1.pyplot(fig_preview)
+    d_col1.pyplot(fig_preview)
 
     # --- Secondo bottone: Run unfolding
     if st.button("Run Unfolding"):

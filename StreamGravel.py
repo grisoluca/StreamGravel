@@ -38,13 +38,14 @@ tol = st.number_input(
 if 'load_matrices_clicked' not in st.session_state:
     st.session_state.load_matrices_clicked = False
 
-if st.button("🚀 Carica matrici e seleziona detector"):
+if st.button("🚀 Load Data"):
     st.session_state.load_matrices_clicked = True
 
 # Ora, solo se i file sono caricati
 if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_file:
     
     col1, col2 = st.columns(2)
+    d_col1, d_col2 = st.columns(2)
     
     # Solo se non già caricate
     if 'R' not in st.session_state:
@@ -63,11 +64,11 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     if 'detector_states' not in st.session_state:
         st.session_state.detector_states = {i: True for i in detectors_list}
 
-    st.subheader("📦 Attiva/disattiva funzioni di risposta:")
+    st.subheader("📦 Select/Deselect Response Functions:")
 
     for i in detectors_list:
         st.session_state.detector_states[i] = st.checkbox(
-            f"Funzione di risposta {i}",
+            f"Detector #{i}",
             value=st.session_state.detector_states[i],
             key=f"detector_{i}"
         )
@@ -75,12 +76,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     selected_detectors = [i for i in detectors_list if st.session_state.detector_states[i]]
 
     if not selected_detectors:
-        st.warning("⚠️ Devi selezionare almeno una funzione.")
+        st.warning("⚠️You need to select at least one response function.")
         st.stop()
 
     # --- Anteprima grafica delle funzioni selezionate
-    st.subheader("👀 Anteprima delle funzioni selezionate:")
-    fig_preview, ax_preview = plt.subplots(figsize=(7, 5))
+    st.subheader("👀 Preview of the selected response function:")
+    fig_preview, ax_preview = plt.subplots(figsize=(6, 4), layout='constrained')
 
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
@@ -94,7 +95,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     ax_preview.set_ylabel("Response (a.u.)")
     ax_preview.legend()
     ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
-    st.pyplot(fig_preview)
+    col1.pyplot(fig_preview)
 
     # --- Secondo bottone: Run unfolding
     if st.button("Run Unfolding"):
@@ -114,7 +115,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xguess_raw = guess_spect[:, 1]
 
         if len(xguess_raw) != R.shape[1]:
-            xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,col2)
+            xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,d_col2)
         else:
             xguess = xguess_raw
 
@@ -130,7 +131,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         else:
             suffix = "guess"
 
-        xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,col1)
+        xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,d_col1)
 
         # Normalizzazione
         xguess /= np.sum(xguess)
@@ -144,7 +145,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.set_ylabel("Normalized Counts")
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
-        col2.pyplot(fig1)
+        d_col2.pyplot(fig1)
 
     #elif run_button and not selected_detectors:
      #   st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")

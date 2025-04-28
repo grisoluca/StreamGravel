@@ -7,7 +7,6 @@ from response_matrix import response_matrix
 
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("🚀 Versione nuova!")
 
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
@@ -49,42 +48,43 @@ if load_matrices_button and response_file and energy_file and counts_file and gu
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
     R,data = response_matrix(response_file,counts_file,energy_file,col1)
     
-    # --- Multiselect dentro un expander
-    with st.expander("📦 Response function selection"):
-        num_detectors = R.shape[0]
-        detectors_list = list(range(num_detectors))
+    
+    num_detectors = R.shape[0]
+    detectors_list = list(range(num_detectors))
+    
+    st.subheader("📦 Select/deselect response function you want to use:")
+    
+    selected_detectors = []
+    
+    for i in detectors_list:
+        # Ogni funzione di risposta ha una checkbox
+        if st.checkbox(f"Resp. Func. {i}", value=True, key=f"detector_{i}"):
+            selected_detectors.append(i)
 
-        selected_detectors = st.multiselect(
-            "Select the response functions you want to use:",
-            detectors_list,
-            default=detectors_list
-        )
+    if not selected_detectors:
+        st.error("❌ You need to select at least one response function.")
+        st.stop()
 
-        # --- Preview delle funzioni selezionate
-        if selected_detectors:
-            st.subheader("👀 Preview of the selected Response functions:")
-            fig_preview, ax_preview = plt.subplots(figsize=(7, 5))
+    # --- Anteprima grafica delle funzioni selezionate
+    st.subheader("👀 Anteprima delle funzioni selezionate:")
+    fig_preview, ax_preview = plt.subplots(figsize=(7, 5))
 
-            energy_file.seek(0)
-            energies = np.loadtxt(energy_file, delimiter='\t')
-            E_new = energies[:, 2]
+    energy_file.seek(0)
+    energies = np.loadtxt(energy_file, delimiter='\t')
+    E_new = energies[:, 2]
 
-            for idx in selected_detectors:
-                ax_preview.plot(E_new, R[idx, :], label=f"Detector {idx}")
+    for idx in selected_detectors:
+        ax_preview.plot(E_new, R[idx, :], label=f"Detector {idx}")
 
-            ax_preview.set_xscale("log")
-            ax_preview.set_xlabel("Energy [MeV]")
-            ax_preview.set_ylabel("Response")
-            ax_preview.legend()
-            ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
-            st.pyplot(fig_preview)
-        else:
-            st.info("Select at least one response function to see the preview.")
+    ax_preview.set_xscale("log")
+    ax_preview.set_xlabel("Energy [MeV]")
+    ax_preview.set_ylabel("Response (a.u.)")
+    ax_preview.legend()
+    ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
+    st.pyplot(fig_preview)
 
     # --- Secondo bottone: Run unfolding
-    run_button = st.button("Run Unfolding")
-
-    if run_button and selected_detectors:
+    if st.button("Run Unfolding"):
         # Filtro matrice e dati
         R = R[selected_detectors, :]
         data = data[selected_detectors]

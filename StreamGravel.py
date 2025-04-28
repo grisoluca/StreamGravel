@@ -49,7 +49,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     # Solo se non già caricate
     if 'R' not in st.session_state:
         # Carica e salva in session_state
-        R, data = response_matrix(response_file, counts_file, energy_file)
+        R, data = response_matrix(response_file, counts_file, energy_file,col1)
         st.session_state.R = R
         st.session_state.data = data
 

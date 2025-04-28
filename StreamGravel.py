@@ -133,8 +133,8 @@ if load_matrices_button and response_file and energy_file and counts_file and gu
         ax1.legend()
         col2.pyplot(fig1)
 
-    elif run_button and not selected_detectors:
-        st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")
+    #elif run_button and not selected_detectors:
+     #   st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")
     # --- Plot errore di convergenza
     #fig2, ax2 = plt.subplots()
     #ax2.plot(np.arange(len(errorg)), errorg, color="k", label="GRAVEL")

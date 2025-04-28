@@ -52,17 +52,23 @@ if load_matrices_button and response_file and energy_file and counts_file and gu
     num_detectors = R.shape[0]
     detectors_list = list(range(num_detectors))
     
-    st.subheader("📦 Select/deselect response function you want to use:")
-    
-    selected_detectors = []
+    # --- Salva la lista dei detector selezionati in session_state
+    if 'detector_states' not in st.session_state:
+        st.session_state.detector_states = {i: True for i in detectors_list}
     
     for i in detectors_list:
-        # Ogni funzione di risposta ha una checkbox
-        if st.checkbox(f"Resp. Func. {i}", value=True, key=f"detector_{i}"):
-            selected_detectors.append(i)
+        # Ogni checkbox aggiorna direttamente il session_state
+        st.session_state.detector_states[i] = st.checkbox(
+            f"Funzione di risposta {i}",
+            value=st.session_state.detector_states[i],
+            key=f"detector_{i}"
+        )
+
+    # Recupero quali sono attivi
+    selected_detectors = [i for i in detectors_list if st.session_state.detector_states[i]]
 
     if not selected_detectors:
-        st.error("❌ You need to select at least one response function.")
+        st.warning("⚠️ Devi selezionare almeno una funzione.")
         st.stop()
 
     # --- Anteprima grafica delle funzioni selezionate

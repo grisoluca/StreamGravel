@@ -32,14 +32,15 @@ tol = st.number_input(
     format="%.1e"
 )
 
-run_button = st.button("Run Unfolding")
+#run_button = st.button("Run Unfolding")
 
+load_matrices_button = st.button("Load Response matrix and go to Detector Selection")
 #st.write("Tipo response_file:", type(response_file))
 #st.write("Tipo counts_file:", type(counts_file))
 #st.write("Tipo energy_file:", type(energy_file))
 #st.write("Tipo energy_file:", type(guess_file))
 
-if run_button and response_file and energy_file and counts_file and guess_file:
+if load_matrices_button and response_file and energy_file and counts_file and guess_file:
     
     col1, col2 = st.columns(2)
 
@@ -47,67 +48,92 @@ if run_button and response_file and energy_file and counts_file and guess_file:
     #st.write("✅ Tutti i file sono stati caricati correttamente...")
     R,data = response_matrix(response_file,counts_file,energy_file,col1)
     
-    # --- NUOVA PARTE: Selezione detector
-    num_detectors = R.shape[0]
-    detectors_list = list(range(num_detectors))
+    # --- Multiselect dentro un expander
+    with st.expander("📦 Response function selection"):
+        num_detectors = R.shape[0]
+        detectors_list = list(range(num_detectors))
 
-    selected_detectors = st.multiselect(
-         "📦 Seleziona le funzioni di risposta da usare:",
-         detectors_list,
-         default=detectors_list  # di default tutte selezionate
-         )
+        selected_detectors = st.multiselect(
+            "Select the response functions you want to use:",
+            detectors_list,
+            default=detectors_list
+        )
 
-    if not selected_detectors:
-         st.warning("⚠️ Devi selezionare almeno una funzione di risposta.")
-         st.stop()
+        # --- Preview delle funzioni selezionate
+        if selected_detectors:
+            st.subheader("👀 Preview of the selected Response functions:")
+            fig_preview, ax_preview = plt.subplots(figsize=(7, 5))
 
-    # Filtro matrice e dati in base alla selezione
-    R = R[selected_detectors, :]
-    data = data[selected_detectors]
+            energy_file.seek(0)
+            energies = np.loadtxt(energy_file, delimiter='\t')
+            E_new = energies[:, 2]
+
+            for idx in selected_detectors:
+                ax_preview.plot(E_new, R[idx, :], label=f"Detector {idx}")
+
+            ax_preview.set_xscale("log")
+            ax_preview.set_xlabel("Energy [MeV]")
+            ax_preview.set_ylabel("Response")
+            ax_preview.legend()
+            ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
+            st.pyplot(fig_preview)
+        else:
+            st.info("Select at least one response function to see the preview.")
+
+    # --- Secondo bottone: Run unfolding
+    run_button = st.button("Run Unfolding")
+
+    if run_button and selected_detectors:
+        # Filtro matrice e dati
+        R = R[selected_detectors, :]
+        data = data[selected_detectors]
+        
     
-    energy_file.seek(0)
-    energies = np.loadtxt(energy_file, delimiter='\t')
-    xbins = energies[:, 2]  # bin centrali
+        energy_file.seek(0)
+        energies = np.loadtxt(energy_file, delimiter='\t')
+        xbins = energies[:, 2]  # bin centrali
     
-    guess_file.seek(0)
-    guess_spect = np.loadtxt(guess_file, delimiter='\t')
+        guess_file.seek(0)
+        guess_spect = np.loadtxt(guess_file, delimiter='\t')
     
-    xbins_guess = guess_spect[:, 0]
-    xguess_raw = guess_spect[:, 1]
+        xbins_guess = guess_spect[:, 0]
+        xguess_raw = guess_spect[:, 1]
 
-    if len(xguess_raw) != R.shape[1]:
-        xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,col2)
-    else:
-        xguess = xguess_raw
+        if len(xguess_raw) != R.shape[1]:
+            xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,col2)
+        else:
+            xguess = xguess_raw
 
-    m = R.shape[1]
-    x_const = np.zeros((m,))
-    mask = (xbins > 1e-8) & (xbins < 1)
-    x_const[mask] = 1 / xbins[mask]
+        m = R.shape[1]
+        x_const = np.zeros((m,))
+        mask = (xbins > 1e-8) & (xbins < 1)
+        x_const[mask] = 1 / xbins[mask]
     
     
-    if initial_guess_type == "Constant":
-        xguess = x_const
-        suffix = "constant"
-    else:
-        suffix = "guess"
+        if initial_guess_type == "Constant":
+            xguess = x_const
+            suffix = "constant"
+        else:
+            suffix = "guess"
 
-    xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,col1)
+        xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,col1)
 
-    # Normalizzazione
-    xguess /= np.sum(xguess)
-    xg /= np.sum(xg)
+        # Normalizzazione
+        xguess /= np.sum(xguess)
+        xg /= np.sum(xg)
 
-    # --- Plot risultati
-    fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
-    ax1.semilogx(xbins, xguess * xbins, label="Guess Spectrum")
-    ax1.semilogx(xbins, xg * xbins, label="GRAVEL")
-    ax1.set_xlabel("Neutron Energy (MeV)")
-    ax1.set_ylabel("Normalized Counts")
-    ax1.grid(True, which="both", ls="--", alpha=0.5)
-    ax1.legend()
-    col2.pyplot(fig1)
+        # --- Plot risultati
+        fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
+        ax1.semilogx(xbins, xguess * xbins, label="Guess Spectrum")
+        ax1.semilogx(xbins, xg * xbins, label="GRAVEL")
+        ax1.set_xlabel("Neutron Energy (MeV)")
+        ax1.set_ylabel("Normalized Counts")
+        ax1.grid(True, which="both", ls="--", alpha=0.5)
+        ax1.legend()
+        col2.pyplot(fig1)
 
+    elif run_button and not selected_detectors:
+        st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")
     # --- Plot errore di convergenza
     #fig2, ax2 = plt.subplots()
     #ax2.plot(np.arange(len(errorg)), errorg, color="k", label="GRAVEL")

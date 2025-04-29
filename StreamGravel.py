@@ -163,8 +163,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             
             with st.container():  # 👈 questo fissa la posizione
                 d_col1.pyplot(figC)
-                d_col2.pyplot(fig1)
                 d_col2.pyplot(figInt)
+                d_col2.pyplot(fig1)
                     
                 with st.expander("📘 Iteration log"):
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")

@@ -7,7 +7,7 @@ from response_matrix import response_matrix
 
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figazza")
+st.title("figaza")
 
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
@@ -162,11 +162,11 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         if st.session_state.unfolding_done:
             
             with st.container():  # 👈 questo fissa la posizione
-                d_col1.pyplot(st.session_state.figC)
-                d_col2.pyplot(st.session_state.fig1)
+                d_col1.pyplot(figC)
+                d_col2.pyplot(fig1)
 
                 if 'figInt' in st.session_state:
-                    d_col2.pyplot(st.session_state.figInt)
+                    d_col2.pyplot(figInt)
                     
                 with st.expander("📘 Iteration log"):
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")

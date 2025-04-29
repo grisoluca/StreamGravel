@@ -4,11 +4,26 @@ import matplotlib.pyplot as plt
 from gravel import gravel
 from rebin import rebin
 from response_matrix import response_matrix
+import io
 
+# --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figaza")
+st.title("figa")
 
+# --------------------- SIDEBAR (Controlli) ---------------------
+st.sidebar.header("⚙️ Parametri di Unfolding")
+initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+tol = st.number_input(
+    "🔍 Chi-squared value to stop iterations", 
+    min_value=1e-12, 
+    max_value=1.0, 
+    value=1e-1, 
+    step=1e-9, 
+    format="%.1e"
+)
+
+# --------------------- FILE UPLOAD ---------------------
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
 # File uploader
@@ -22,17 +37,10 @@ with st.container ():
         energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
         guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
 
-initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
-    
-tol = st.number_input(
-    "🔍 Chi-squared value to stop iterations", 
-    min_value=1e-12, 
-    max_value=1.0, 
-    value=1e-1, 
-    step=1e-9, 
-    format="%.1e"
-)
 
+    
+
+# --------------------- AVVIO ---------------------
 #run_button = st.button("Run Unfolding")
 
 # -- Assicura che lo stato sia inizializzato
@@ -170,6 +178,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
 
         #d_col2.pyplot(fig1)
+        # --- DOWNLOAD
+        st.markdown("### 📦 Download Risultati")
+        csv_out = np.column_stack((xbins, xg))
+        csv_str = io.StringIO()
+        np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (norm)', comments='')
+        st.download_button("📥 Scarica spettro unfolding", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
 
 
 else:

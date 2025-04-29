@@ -57,8 +57,8 @@ def gravel(R,data,x,tolerance,energy_file):
         stepcount += 1
         J0 = J
         
-    with st.expander("📘 Iteration log"):
-        st.text_area("Output GRAVEL", logIter, height=300)    
+    #with st.expander("📘 Iteration log"):
+     #   st.text_area("Output GRAVEL", logIter, height=300)    
     
     figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
     axC.plot(data, label="measured")

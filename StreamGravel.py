@@ -7,7 +7,7 @@ from response_matrix import response_matrix
 
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figa")
+#st.title("figa")
 
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
@@ -87,6 +87,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
     E_new = energies[:, 2]
+    E_bin_sx = energies[:,0] # bin sx
+    E_bin_dx = energies[:,1] # bin dx
+    dE = E_bin_dx-E_bin_sx
 
     for idx in selected_detectors:
         ax_preview.plot(E_new, R[idx, :], marker='o', linestyle='-', label=f"Detector {idx}")
@@ -145,8 +148,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         # --- Plot risultati
         fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax1.semilogx(xbins, xguess * xbins, label="Guess Spectrum")
-        ax1.semilogx(xbins, xg * xbins, label="GRAVEL")
+        ax1.bar(xbins, xguess * xbins,width = dE, label="Guess Spectrum")
+        ax1.bar(xbins, xg * xbins,width = dE, label="GRAVEL")
+        ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
         ax1.set_ylabel("Normalized Counts")
         ax1.grid(True, which="both", ls="--", alpha=0.5)
@@ -161,23 +165,6 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         d_col2.pyplot(fig1)
 
-    #elif run_button and not selected_detectors:
-     #   st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")
-    # --- Plot errore di convergenza
-    #fig2, ax2 = plt.subplots()
-    #ax2.plot(np.arange(len(errorg)), errorg, color="k", label="GRAVEL")
-    #ax2.axhline(tol, color="r", linestyle="--", linewidth=0.75)
-    #ax2.set_ylabel("$\\Delta J$")
-    #ax2.set_xlabel("Iteration")
-    #ax2.grid(True, which="both", ls=":")
-    #ax2.legend()
-    #st.pyplot(fig2)
 
-    # --- Calcolo errore relativo
-    #nonzero_mask = xguess != 0
-    #diff_g = abs(xguess[nonzero_mask] - xg[nonzero_mask]) / xguess[nonzero_mask]
-    #rel_norm = np.linalg.norm(diff_g)
-
-    #st.metric(label="Normalized Relative error", value=f"{rel_norm:.4f}")
 else:
     st.info("Upload all files and click on 'Run Unfolding' to start.")

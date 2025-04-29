@@ -23,7 +23,7 @@ def rebin(E_old,S_old,energy_file):
     figInt, axInt = plt.subplots(figsize=(6, 4), layout='constrained')
     axInt.semilogx(E_old, S_old * E_old, 'o', label='Originale (35)')
     axInt.semilogx(E_new, S_new * E_new, 'x-', label='Interpolato (60)')
-    axInt.semilogx(E_interp, S_interp * E_interp, '-', label='funz con')
+    #axInt.semilogx(E_interp, S_interp * E_interp, '-', label='funz con')
     axInt.set_xlabel('Energia')
     axInt.set_ylabel('Spettro')
     axInt.set_title('Rebinning dello spettro')

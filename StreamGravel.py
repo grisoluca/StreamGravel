@@ -155,9 +155,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         # Segna che abbiamo fatto il run
         st.session_state.unfolding_done = True
         
-if st.session_state.unfolding_done:
-    with st.expander("📘 Iteration log"):
-        st.text_area("Output GRAVEL", logIter, height=300)
+        if st.session_state.unfolding_done:
+            with st.expander("📘 Iteration log"):
+                st.text_area("Output GRAVEL", logIter, height=300)
 
     d_col2.pyplot(fig1)
 

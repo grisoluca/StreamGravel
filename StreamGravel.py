@@ -148,8 +148,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         # --- Plot risultati
         fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax1.bar(xbins, xguess * xbins,width = dE,align='center',facecolor="none", label="Guess Spectrum")
-        ax1.bar(xbins, xg * xbins,width = dE,align='center',facecolor="none", label="GRAVEL")
+        ax1.bar(xbins, xguess * xbins,width = dE,align='center',facecolor="none",edgecolor='blue', label="Guess Spectrum")
+        ax1.bar(xbins, xg * xbins,width = dE,align='center',facecolor="none",edgecolor='black', label="GRAVEL")
         ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
         ax1.set_ylabel("Normalized Counts")

@@ -13,8 +13,8 @@ st.title("figas")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Parametri di Unfolding")
-initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
-tol = st.number_input(
+initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 
     min_value=1e-12, 
     max_value=1.0, 

@@ -25,7 +25,7 @@ with st.container ():
 initial_guess_type = st.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
     
 tol = st.number_input(
-    "🔍 Soglia di arresto (tolleranza su ΔJ)", 
+    "🔍 Chi-squared value to stop iterations", 
     min_value=1e-12, 
     max_value=1.0, 
     value=1e-7, 

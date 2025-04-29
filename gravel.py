@@ -18,7 +18,6 @@ def gravel(R,data,x,tolerance,energy_file,col):
     data = np.array([val for val in data if val > 0])
     # redefine number of rows after the reduction
     n = R.shape[0]
-    J0 = 0 ; dJ0 = 1 ; ddJ = 1
     error = []
     stepcount = 1
     
@@ -28,36 +27,35 @@ def gravel(R,data,x,tolerance,energy_file,col):
     E_bin_dx = energies[:,1] # bin dx
     #E_new = energies[:, 2] # bin centrale
     dE = E_bin_dx-E_bin_sx
+
+    rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
+    J0 = np.sum((rdot - data) ** 2) / np.sum(rdot)
+    logIter = f"Initial chi-squared J = {J0:.2e}\n"
+    
+   
     
     logIter = ""
     
-    while ddJ > tolerance:
-        W = np.zeros((n,m))
-        rdot = np.zeros((n,))
-        for i in range(n):
-            rdot[i] = np.sum(R[i,:]*x*dE)#primo folding tra spettro di guess e matrici di risposta
+    while J0 > tolerance:
+        W = np.zeros((n, m))
+        rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
 
         for j in range(m):
-
-            W[:,j] = data*R[:,j]*x[j]*dE[j] / rdot
-            num = np.dot(W[:,j],log(data/rdot))
-
+            W[:, j] = data * R[:, j] * x[j] * dE[j] / rdot
+            num = np.dot(W[:, j], log(data / rdot))
             num = np.nan_to_num(num)
-            den = sum(W[:,j])
+            den = np.sum(W[:, j])
 
-            if den == 0:
-                x[j] *= 1
-            else:
-                x[j] *= exp(num/den)
+            if den != 0:
+                x[j] *= exp(num / den)
 
-        J = sum((rdot-data)**2) / sum(rdot)
-        dJ = J0-J
-        ddJ = abs(dJ-dJ0)
-        J0 = J
-        error.append(ddJ)
-        logIter += f"Iteration {stepcount}, ddJ = {ddJ:.2e}\n"
+        rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
+        J = np.sum((rdot - data) ** 2) / np.sum(rdot)
+        error.append(J)
+
+        logIter += f"Iteration {stepcount}, chi-squared J = {J:.2e}\n"
         stepcount += 1
-        dJ0 = dJ
+        J0 = J
         
     with st.expander("📘 Iteration log"):
         st.text_area("Output GRAVEL", logIter, height=300)    

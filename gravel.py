@@ -64,6 +64,6 @@ def gravel(R,data,x,tolerance,energy_file,col):
     axC.plot(data, label="measured")
     axC.plot(rdot, label="evaluated")
     axC.legend()
-    col.pyplot(figC)
+    #col.pyplot(figC)
 
-    return(x,np.array(error))
+    return(x,np.array(error),figC,logIter)

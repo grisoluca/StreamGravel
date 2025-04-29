@@ -7,7 +7,7 @@ from response_matrix import response_matrix
 
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figa")
+#st.title("figa")
 
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 
@@ -28,7 +28,7 @@ tol = st.number_input(
     "🔍 Chi-squared value to stop iterations", 
     min_value=1e-12, 
     max_value=1.0, 
-    value=1e-7, 
+    value=1e-1, 
     step=1e-9, 
     format="%.1e"
 )
@@ -98,6 +98,10 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
     d_col1.pyplot(fig_preview)
 
+   # Flag di stato per mostrare i grafici solo dopo il click su "Run Unfolding"
+    if 'unfolding_done' not in st.session_state:
+        st.session_state.unfolding_done = False
+
     # --- Secondo bottone: Run unfolding
     if st.button("Run Unfolding"):
         # Filtro matrice e dati
@@ -116,7 +120,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xguess_raw = guess_spect[:, 1]
 
         if len(xguess_raw) != R.shape[1]:
-            xbins, xguess = rebin(xbins_guess, xguess_raw,energy_file,d_col2)
+            xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)
+            d_col2.pyplot(figInt)
         else:
             xguess = xguess_raw
 
@@ -132,8 +137,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         else:
             suffix = "guess"
 
-        xg, errorg = gravel(R, data, xguess.copy(), tol, energy_file,d_col1)
-
+        xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file)
+        d_col1.pyplot(figC)
         # Normalizzazione
         xguess /= np.sum(xguess)
         xg /= np.sum(xg)
@@ -146,7 +151,15 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.set_ylabel("Normalized Counts")
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
-        d_col2.pyplot(fig1)
+        
+        # Segna che abbiamo fatto il run
+        st.session_state.unfolding_done = True
+        
+if st.session_state.unfolding_done:
+    with st.expander("📘 Iteration log"):
+        st.text_area("Output GRAVEL", logIter, height=300)
+
+    d_col2.pyplot(fig1)
 
     #elif run_button and not selected_detectors:
      #   st.error("❌ Devi selezionare almeno una funzione di risposta prima di eseguire l'unfolding.")

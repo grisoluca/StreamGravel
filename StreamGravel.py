@@ -114,7 +114,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.unfolding_done = False
 
     # --- Secondo bottone: Run unfolding
-    if st.button("Run Unfolding"):
+    if st.sidebar.button("Run Unfolding"):
         # Filtro matrice e dati
         R = R[selected_detectors, :]
         data = data[selected_detectors]
@@ -183,7 +183,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         csv_out = np.column_stack((xbins, xg))
         csv_str = io.StringIO()
         np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (norm)', comments='')
-        st.download_button("📥 Scarica spettro unfolding", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
+        st.sidebar.download_button("📥 Scarica spettro unfolding", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
 
 
 else:

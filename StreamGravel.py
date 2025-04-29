@@ -124,7 +124,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         if len(xguess_raw) != R.shape[1]:
             xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)
-            d_col2.pyplot(figInt)
+            #d_col2.pyplot(figInt)
         else:
             xguess = xguess_raw
 
@@ -141,7 +141,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             suffix = "guess"
 
         xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file)
-        d_col1.pyplot(figC)
+        #d_col1.pyplot(figC)
         # Normalizzazione
         xguess /= np.sum(xguess)
         xg /= np.sum(xg)
@@ -160,10 +160,18 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.unfolding_done = True
         
         if st.session_state.unfolding_done:
-            with st.expander("📘 Iteration log"):
-                st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
+            
+            with st.container():  # 👈 questo fissa la posizione
+                d_col1.pyplot(st.session_state.figC)
+                d_col2.pyplot(st.session_state.fig1)
 
-        d_col2.pyplot(fig1)
+                if 'figInt' in st.session_state:
+                    d_col2.pyplot(st.session_state.figInt)
+                    
+                with st.expander("📘 Iteration log"):
+                    st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
+
+        #d_col2.pyplot(fig1)
 
 
 else:

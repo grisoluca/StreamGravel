@@ -9,7 +9,7 @@ import io
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figas")
+#st.title("figas")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Parametri di Unfolding")
@@ -89,7 +89,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.stop()
 
     # --- Anteprima grafica delle funzioni selezionate
-    st.subheader("👀 Preview of the selected response function:")
+    #st.subheader("👀 Preview of the selected response function:")
     fig_preview, ax_preview = plt.subplots(figsize=(6, 4), layout='constrained')
 
     energy_file.seek(0)
@@ -174,12 +174,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 d_col2.pyplot(figInt)
                 d_col2.pyplot(fig1)
                     
-                with st.expander("📘 Iteration log"):
+                with st.sidebar.expander("📘 Iteration log"):
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
 
         #d_col2.pyplot(fig1)
         # --- DOWNLOAD
-        st.markdown("### 📦 Download Risultati")
+        st.sidebar.markdown("### 📦 Download Risultati")
         csv_out = np.column_stack((xbins, xg))
         csv_str = io.StringIO()
         np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (norm)', comments='')

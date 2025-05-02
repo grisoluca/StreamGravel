@@ -170,6 +170,13 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
         
+        figJ, axJ = plt.subplots(figsize=(4, 2), layout='constrained')
+        axJ.plot(range(1, len(errorg) + 1), errorg, marker='o')
+        axJ.set_xlabel("Iteration")
+        axJ.set_ylabel("Chi-squared J")
+        axJ.set_title("Chi-squared convergence")
+        axJ.grid(True, linestyle='--', alpha=0.5)
+        
         # Segna che abbiamo fatto il run
         st.session_state.unfolding_done = True
         
@@ -182,6 +189,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                     
                 with st.sidebar.expander("📘 Iteration log"):
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
+                    st.pyplot(figJ)
 
         #d_col2.pyplot(fig1)
         # --- DOWNLOAD

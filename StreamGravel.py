@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from gravel import gravel
+from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
 import io
@@ -14,6 +15,7 @@ st.title("GRAVEL Neutron Spectrum Unfolding")
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Parametri di Unfolding")
 initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 
     min_value=1e-12, 
@@ -148,7 +150,11 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         else:
             suffix = "guess"
 
-        xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file)
+        if unfolding_type == "Gravel":
+            xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file)
+        else:
+            xg, errorg, figC, logIter = mlem(R, data, xguess.copy(), tol, energy_file)
+        
         #d_col1.pyplot(figC)
         # Normalizzazione
         xguess /= np.sum(xguess)

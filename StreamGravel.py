@@ -161,7 +161,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xg /= np.sum(xg)
 
         # --- Plot risultati
-        fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
+        fig1, ax1 = plt.subplots(figsize=(6, 6), layout='constrained')
         ax1.step(xbins, xguess * xbins,where='mid',color='blue', label="Guess Spectrum")
         ax1.step(xbins, xg * xbins,where='mid',color='red', label="GRAVEL")
         ax1.set_xscale("log")

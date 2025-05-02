@@ -162,7 +162,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xg /= np.sum(xg)
 
         # --- Plot risultati
-        fig1, ax1 = plt.subplots(figsize=(4, 2), layout='constrained')
+        fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
         ax1.step(xbins, xguess * xbins,where='mid',color='blue', label="Guess Spectrum")
         ax1.step(xbins, xg * xbins,where='mid',color='red', label="GRAVEL")
         ax1.set_xscale("log")
@@ -171,7 +171,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
         
-        figJ, axJ = plt.subplots(figsize=(4, 2), layout='constrained')
+        figJ, axJ = plt.subplots(figsize=(6, 4), layout='constrained')
         axJ.plot(range(1, len(errorg) + 1), errorg, marker='o')
         axJ.set_xlabel("Iteration")
         axJ.set_ylabel("Chi-squared J")

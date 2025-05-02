@@ -9,7 +9,7 @@ import io
 
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
-st.title("GRAVEL Neutron Spectrum Unfolding")
+st.title("GRAVELZS Neutron Spectrum Unfolding")
 st.title("figghesti")
 
 # --------------------- SIDEBAR (Controlli) ---------------------

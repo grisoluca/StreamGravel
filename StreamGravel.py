@@ -5,6 +5,7 @@ from gravel import gravel
 from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
+import matplotlib.ticker as ticker
 import io
 
 # --------------------- CONFIGURAZIONE ---------------------
@@ -161,7 +162,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xg /= np.sum(xg)
 
         # --- Plot risultati
-        fig1, ax1 = plt.subplots(figsize=(6, 6), layout='constrained')
+        fig1, ax1 = plt.subplots(figsize=(4, 2), layout='constrained')
         ax1.step(xbins, xguess * xbins,where='mid',color='blue', label="Guess Spectrum")
         ax1.step(xbins, xg * xbins,where='mid',color='red', label="GRAVEL")
         ax1.set_xscale("log")
@@ -175,7 +176,10 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         axJ.set_xlabel("Iteration")
         axJ.set_ylabel("Chi-squared J")
         axJ.set_title("Chi-squared convergence")
-        axJ.grid(True, linestyle='--', alpha=0.5)
+        axJ.grid(True, which='both', linestyle='--', alpha=0.5)
+        axJ.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
+        axJ.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+        axJ.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6, prune=None))
         
         # Segna che abbiamo fatto il run
         st.session_state.unfolding_done = True

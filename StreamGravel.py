@@ -14,7 +14,7 @@ st.title("GRAVELZS Neutron Spectrum UnfoldingZS")
 #st.title("figghesti")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
-st.sidebar.header("⚙️ Parametri di Unfolding")
+st.sidebar.header("⚙️ Unfolding parameters")
 initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
 unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
@@ -197,11 +197,11 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         #d_col2.pyplot(fig1)
         # --- DOWNLOAD
-        st.sidebar.markdown("### 📦 Download Risultati")
+        st.sidebar.markdown("### 📦 Results Download ")
         csv_out = np.column_stack((xbins, xg))
         csv_str = io.StringIO()
         np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (norm)', comments='')
-        st.sidebar.download_button("📥 Scarica spettro unfolding", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
+        st.sidebar.download_button("📥 Dowload unfolded spectrum", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
 
 
 else:

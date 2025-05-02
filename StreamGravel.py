@@ -10,7 +10,7 @@ import io
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figghe")
+st.title("figghest")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Parametri di Unfolding")

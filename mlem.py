@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def mlem(R, data, x, tolerance, energy_file):
+def mlem(R, data, x, tolerance, energy_file,max_iter):
     x = x.copy()
     n, m = R.shape
 
@@ -22,7 +22,7 @@ def mlem(R, data, x, tolerance, energy_file):
     error = []
     stepcount = 1
 
-    while J0 > tolerance:
+    while J0 > tolerance or stepcount <=max_iter:
         vector = np.zeros(n)
 
         for i in range(n):

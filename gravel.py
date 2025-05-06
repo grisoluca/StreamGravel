@@ -3,7 +3,7 @@ from numpy import log,exp
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def gravel(R,data,x,tolerance,energy_file):
+def gravel(R,data,x,tolerance,energy_file,max_iter):
     """
     R --> Response matrix, shape is (n,m)
     N --> data from each detector, shape is (n,)
@@ -36,7 +36,7 @@ def gravel(R,data,x,tolerance,energy_file):
     
     logIter = ""
     
-    while J0 > tolerance:
+    while J0 > tolerance or stepcount<=max_iter:
         W = np.zeros((n, m))
         rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
 

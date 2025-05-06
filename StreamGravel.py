@@ -25,6 +25,13 @@ tol = st.sidebar.number_input(
     step=1e-9, 
     format="%.1e"
 )
+max_iter = st.sidebar.number_input(
+    "🔁 Max number of iterations", 
+    min_value=1, 
+    max_value=1000000, 
+    value=100, 
+    step=1
+)
 
 # --------------------- FILE UPLOAD ---------------------
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
@@ -152,9 +159,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             suffix = "guess"
 
         if unfolding_type == "Gravel":
-            xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file)
+            xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file,max_iter)
         else:
-            xg, errorg, figC, logIter = mlem(R, data, xguess.copy(), tol, energy_file)
+            xg, errorg, figC, logIter = mlem(R, data, xguess.copy(), tol, energy_file,max_iter)
         
         #d_col1.pyplot(figC)
         # Normalizzazione

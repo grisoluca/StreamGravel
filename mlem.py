@@ -22,7 +22,7 @@ def mlem(R, data, x, tolerance, energy_file,max_iter):
     error = []
     stepcount = 1
 
-    while J0 > tolerance or stepcount <=max_iter:
+    while J0 > tolerance and stepcount <=max_iter:
         vector = np.zeros(n)
 
         for i in range(n):

@@ -36,7 +36,7 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     
     logIter = ""
     
-    while J0 > tolerance or stepcount<=max_iter:
+    while J0 > tolerance and stepcount<=max_iter:
         W = np.zeros((n, m))
         rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
 

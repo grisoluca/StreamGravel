@@ -11,7 +11,7 @@ import io
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figgh")
+st.title("fig")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
@@ -46,7 +46,7 @@ with st.container ():
     with col_u2:
         energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
         guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
-        is_letargic = st.checkbox("☑️ Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
+        is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
 
     
 

@@ -46,7 +46,7 @@ with st.container ():
     with col_u2:
         energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
         guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
-
+        is_letargic = st.checkbox("☑️ Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
 
     
 
@@ -139,6 +139,10 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     
         xbins_guess = guess_spect[:, 0]
         xguess_raw = guess_spect[:, 1]
+        
+        if is_letargic:
+            # Conversione da dΦ/dlnE → dΦ/dE
+            xguess_raw = xguess_raw / xbins_guess
 
         if len(xguess_raw) != R.shape[1]:
             xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)

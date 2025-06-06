@@ -32,7 +32,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     dE = E_bin_dx-E_bin_sx
 
     rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-    J0 = np.sum((rdot - meas) ** 2) / np.sum(rdot)
+    #J0 = np.sum((rdot - meas) ** 2) / np.sum(rdot)
+    J0 = np.sum(((np.log(rdot) - np.log(meas)) ** 2)/uncer)
     logIter = f"Initial chi-squared J = {J0:.2e}\n"
     
    

@@ -14,8 +14,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     n = R.shape[0]
     m = R.shape[1]
     # eliminate any channel with 0 count
-    R = np.array([R[i] for i in range(n) if data[i] != 0])
-    data = np.array([val for val in data if val > 0])
+    R = np.array([R[i] for i in range(n) if data[i,0] != 0])
+    data = np.array([val for val in data if val[0] > 0])
     # redefine number of rows after the reduction
     n = R.shape[0]
     error = []
@@ -50,7 +50,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
                 x[j] *= exp(num / den)
 
         rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-        J = np.sum((rdot - data) ** 2) / np.sum(rdot)
+        #J = np.sum((rdot - data) ** 2) / np.sum(rdot)
+        J = np.sum((np.log(rdot) - np.log(data)) ** 2) / np.sum(rdot)
         error.append(J)
 
         logIter += f"Iteration {stepcount}, chi-squared J = {J:.2e}\n"

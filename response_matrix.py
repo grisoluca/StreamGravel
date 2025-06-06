@@ -15,7 +15,7 @@ def response_matrix(response_file,counts_file,energy_file,col):
     R = R[funz, :]
     
     #st.write("✅ Caricamento dei conteggi...")
-    data_full = np.loadtxt(counts_file)
+    data_full = np.loadtxt(counts_file, delimiter='\t')
     data = data_full[funz]
     
     #st.write("✅ Caricamento delle energie...")

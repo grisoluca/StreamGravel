@@ -41,7 +41,7 @@ with st.container ():
     col_u1, col_u2 = st.columns(2)
     with col_u1:
         response_file = st.file_uploader("📁 Response matrix (TXT, Response Function for each column, tab-separated)", type="txt")
-        counts_file = st.file_uploader("📈 Measured counts, in column (TXT)", type="txt")
+        counts_file = st.file_uploader("📈 Measured counts: 1st col: counts, 2nd col: relative uncertainty %", type="txt")
 
     with col_u2:
         energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
@@ -127,7 +127,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     if st.sidebar.button("Run Unfolding"):
         # Filtro matrice e dati
         R = R[selected_detectors, :]
-        data = data[selected_detectors]
+        data = data[selected_detectors,:]
         
     
         energy_file.seek(0)

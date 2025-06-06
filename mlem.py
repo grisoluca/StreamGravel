@@ -7,7 +7,7 @@ def mlem(R, data, x, tolerance, energy_file,max_iter):
     n, m = R.shape
 
     # Elimina canali con 0 conteggi
-    R = np.array([R[i] for i in range(n) if data[i] != 0])
+    R = np.array([R[i] for i in range(n) if data[i,0] != 0])
     data = np.array(data)
     meas = data[data[:, 0] > 0][:, 0]
     uncer = data[data[:, 0] > 0][:, 1] #relative uncertainties rho=sigma/misura

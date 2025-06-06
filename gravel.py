@@ -15,7 +15,10 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     m = R.shape[1]
     # eliminate any channel with 0 count
     R = np.array([R[i] for i in range(n) if data[i,0] != 0])
-    data = np.array([val for val in data if val[0] > 0])
+    data = np.array(data)
+    meas = data[data[:, 0] > 0][:, 0]
+    uncer = data[data[:, 0] > 0][:, 1] #relative uncertainties rho=sigma/misura
+
     # redefine number of rows after the reduction
     n = R.shape[0]
     error = []
@@ -29,7 +32,7 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     dE = E_bin_dx-E_bin_sx
 
     rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-    J0 = np.sum((rdot - data) ** 2) / np.sum(rdot)
+    J0 = np.sum((rdot - meas) ** 2) / np.sum(rdot)
     logIter = f"Initial chi-squared J = {J0:.2e}\n"
     
    
@@ -41,8 +44,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
         rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
 
         for j in range(m):
-            W[:, j] = data * R[:, j] * x[j] * dE[j] / rdot
-            num = np.dot(W[:, j], log(data / rdot))
+            W[:, j] = meas * R[:, j] * x[j] * dE[j] / rdot
+            num = np.dot(W[:, j], log(meas / rdot))
             num = np.nan_to_num(num)
             den = np.sum(W[:, j])
 
@@ -50,8 +53,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
                 x[j] *= exp(num / den)
 
         rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-        #J = np.sum((rdot - data) ** 2) / np.sum(rdot)
-        J = np.sum((np.log(rdot) - np.log(data)) ** 2) / np.sum(rdot)
+        #J = np.sum((rdot - meas) ** 2) / np.sum(rdot)
+        J = np.sum(((np.log(rdot) - np.log(meas)) ** 2)/uncer)
         error.append(J)
 
         logIter += f"Iteration {stepcount}, chi-squared J = {J:.2e}\n"
@@ -62,7 +65,7 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
      #   st.text_area("Output GRAVEL", logIter, height=300)    
     
     figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
-    axC.plot(data, label="measured")
+    axC.plot(meas, label="measured")
     axC.plot(rdot, label="evaluated")
     axC.legend()
     #col.pyplot(figC)

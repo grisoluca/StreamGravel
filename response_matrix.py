@@ -16,7 +16,13 @@ def response_matrix(response_file,counts_file,energy_file,col):
     
     #st.write("✅ Caricamento dei conteggi...")
     data_full = np.loadtxt(counts_file, delimiter='\t')
-    data = data_full[funz]
+    
+    if data_full.ndim == 1:
+        uncertainties = np.ones((data_full.shape[0],1))
+        data_full = data_full.reshape(-1, 1)  # Converti in colonna
+        data_full = np.hstack((data_full, uncertainties))
+    
+    data = data_full[funz,:]
     
     #st.write("✅ Caricamento delle energie...")
     energy_file.seek(0)

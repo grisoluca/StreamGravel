@@ -23,7 +23,7 @@ def response_matrix(response_file,counts_file,energy_file,col):
         data_full = np.hstack((data_full, uncertainties))
     
     data = data_full[funz,:]
-    print(data)
+    st.text_area("Data_debug", data, height=300,key="data_debug")
     
     #st.write("✅ Caricamento delle energie...")
     energy_file.seek(0)

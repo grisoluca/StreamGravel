@@ -18,8 +18,8 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     data = np.array(data)
     meas = data[data[:, 0] > 0][:, 0]
     uncer = data[data[:, 0] > 0][:, 1] #relative uncertainties rho=sigma/misura
-    print(meas)
-    print(uncer)
+    st.text_area("meas_debug", meas, height=300,key="meas_debug")
+    st.text_area("uncer_debug", uncer, height=300,key="muncewr_debug")
 
     # redefine number of rows after the reduction
     n = R.shape[0]

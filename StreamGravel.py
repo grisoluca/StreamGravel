@@ -66,12 +66,20 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     col1, col2 = st.columns(2)
     d_col1, d_col2 = st.columns(2)
     
-    # Solo se non già caricate
-    if 'R' not in st.session_state:
-        # Carica e salva in session_state
-        R, data = response_matrix(response_file, counts_file, energy_file,col1)
+    # Rileva se uno dei file è cambiato
+    file_changed = (
+        'last_response_file' not in st.session_state or response_file != st.session_state.last_response_file or
+        'last_counts_file' not in st.session_state or counts_file != st.session_state.last_counts_file or
+        'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file
+    )
+
+    if file_changed:
+        R, data = response_matrix(response_file, counts_file, energy_file, col1)
         st.session_state.R = R
         st.session_state.data = data
+        st.session_state.last_response_file = response_file
+        st.session_state.last_counts_file = counts_file
+        st.session_state.last_energy_file = energy_file
 
     R = st.session_state.R
     data = st.session_state.data

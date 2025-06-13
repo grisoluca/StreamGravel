@@ -8,11 +8,11 @@ def response_matrix(response_file,counts_file,energy_file,col):
 
     #st.write("✅ Trasposizione della matrice...")
     R = R.T
-    funz = [0,1,2,3,4,5,6,7,8,9]
-    stop = len(funz)
+    #funz = [0,1,2,3,4,5,6,7,8,9]
+    #stop = len(funz)
     
     #st.write("✅ Selezione dei detector:", funz)
-    R = R[funz, :]
+    #R = R[funz, :]
     
     #st.write("✅ Caricamento dei conteggi...")
     data_full = np.loadtxt(counts_file, delimiter='\t')
@@ -22,7 +22,7 @@ def response_matrix(response_file,counts_file,energy_file,col):
         data_full = data_full.reshape(-1, 1)  # Converti in colonna
         data_full = np.hstack((data_full, uncertainties))
     
-    data = data_full[funz,:]
+    data = data_full#[funz,:]
     st.dataframe(data)
     
     #st.write("✅ Caricamento delle energie...")
@@ -39,7 +39,7 @@ def response_matrix(response_file,counts_file,energy_file,col):
     #st.write("✅ Plotting...")
     figRM, axRM = plt.subplots(figsize=(6, 4), layout='constrained')  # puoi cambiare le dimensioni se vuoi
 
-    for i in range(stop):
+    for i in range(R.shape[0]):
         axRM.plot(E_new, R[i, :], marker='o', linestyle='-', label=f"Scint {i+1}")
 
     axRM.set_xscale("log")

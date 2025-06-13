@@ -207,7 +207,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             
             with st.container():  # 👈 questo fissa la posizione
                 d_col1.pyplot(figC)
-                if figInt is not None:
+                if 'figInt' in globals():
                     d_col2.pyplot(figInt)
                 #d_col2.pyplot(figInt)
                 d_col2.pyplot(fig1)

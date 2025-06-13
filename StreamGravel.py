@@ -11,7 +11,7 @@ import io
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(layout="wide")
 st.title("GRAVEL Neutron Spectrum Unfolding")
-st.title("figs")
+st.title("figi")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
@@ -207,7 +207,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             
             with st.container():  # 👈 questo fissa la posizione
                 d_col1.pyplot(figC)
-                d_col2.pyplot(figInt)
+                if figInt is not None:
+                    d_col2.pyplot(figInt)
+                #d_col2.pyplot(figInt)
                 d_col2.pyplot(fig1)
                     
                 with st.sidebar.expander("📘 Iteration log"):

@@ -9,6 +9,12 @@ import matplotlib.ticker as ticker
 import io
 
 # --------------------- CONFIGURAZIONE ---------------------
+st.set_page_config(
+    page_title="GRAVEL Unfolding",
+    page_icon="LogoNML-Black.png",  # può essere un'emoji o un file
+    layout="wide"
+)
+
 st.set_page_config(layout="wide")
 st.title("Neutron Spectrum Unfolding")
 #st.title("figi")

@@ -34,8 +34,8 @@ max_iter = st.sidebar.number_input(
 )
 
 # --------------------- ESEMPI SCARICA---------------------
-#st.markdown("### 📦 Download here an example file")
-with st.expander("📦 Download here an example file"):
+st.markdown("### 📦 Download down here an example file")
+with st.expander("📦 Expand for example"):
     with open("example-LINAC.zip", "rb") as f:
         st.download_button(
             label="⬇️ Download Example - LINAC",

@@ -33,6 +33,25 @@ max_iter = st.sidebar.number_input(
     step=1
 )
 
+# --------------------- ESEMPI SCARICA---------------------
+#st.markdown("### 📦 Download here an example file")
+with st.expander("### 📦 Download here an example file"):
+    with open("example-LINAC.zip", "rb") as f:
+        st.download_button(
+            label="⬇️ Download Example - LINAC",
+            data=f,
+            file_name="example_data_unfolding.zip",
+            mime="application/zip"
+        )
+
+    st.markdown("Example files include:\n"
+                "- Response Matrix\n"
+                "- Measurede Counts\n"
+                "- Energy bins (left, rifht, centre)\n"
+                "- Guess spectrum\n"
+                "\n➡️ Upload them below to try the unfolding application.")
+
+
 # --------------------- FILE UPLOAD ---------------------
 st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the repsonse functions, Initial Guess Spectrum")
 

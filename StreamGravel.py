@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.set_page_config(layout="wide")
+#st.set_page_config(layout="wide")
 st.title("Neutron Spectrum Unfolding")
 #st.title("figi")
 

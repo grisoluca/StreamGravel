@@ -45,11 +45,12 @@ with st.expander("### 📦 Download here an example file"):
         )
 
     st.markdown("Example files include:\n"
-                "- Response Matrix\n"
-                "- Measurede Counts\n"
-                "- Energy bins (left, rifht, centre)\n"
-                "- Guess spectrum\n"
-                "\n➡️ Upload them below to try the unfolding application.")
+                "- Response Matrix (TXT, Response Function for each column, tab-separated) \n"
+                "- Measurede Counts (TXT, 1st col: counts, 2nd col: relative uncertainty) \n"
+                "- Energy bins (TXT, 1st col: left boundary of the bin, 2nd col: right boundary of the bin, 3rd col: central energy) \n"
+                "- Guess spectrum (TXT, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE) \n"
+                "\n➡️ Upload them below to try the unfolding application."
+                "\n➡️ ATTENTION: Example Guess Spectrum is per Unit lethargy")
 
 
 # --------------------- FILE UPLOAD ---------------------
@@ -59,12 +60,12 @@ st.markdown("Upload datas: Response Matrix, Measured Counts, Energy bins of the 
 with st.container ():
     col_u1, col_u2 = st.columns(2)
     with col_u1:
-        response_file = st.file_uploader("📁 Response matrix (TXT, Response Function for each column, tab-separated)", type="txt")
-        counts_file = st.file_uploader("📈 Measured counts: 1st col: counts, 2nd col: relative uncertainty", type="txt")
+        response_file = st.file_uploader("📁 Response matrix", type="txt")
+        counts_file = st.file_uploader("📈 Measured counts", type="txt")
 
     with col_u2:
-        energy_file = st.file_uploader("⚡ Energy bins (MeV), 1st col: left boundary of the energy bin, 2nd col: right boundary of the energy bin, 3rd col: central energy (TXT)", type="txt")
-        guess_file = st.file_uploader("🧠 Initial guess spectrum, 1st col: energy in MeV, 2nd col: differential spectrum in energy dPhi/dE  (TXT)", type="txt")
+        energy_file = st.file_uploader("⚡ Energy bins (MeV)", type="txt")
+        guess_file = st.file_uploader("🧠 Initial guess spectrum", type="txt")
         is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
 
     

@@ -26,10 +26,10 @@ unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"]
 tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 
     min_value=1e-12, 
-    max_value=1.0, 
+    max_value=10.0, 
     value=1e-1, 
-    step=1e-9, 
-    format="%.1e"
+    step=1e-2, 
+    format="%.2e"
 )
 max_iter = st.sidebar.number_input(
     "🔁 Max number of iterations", 

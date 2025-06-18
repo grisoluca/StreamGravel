@@ -21,7 +21,7 @@ st.title("Neutron Spectrum Unfolding")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
-initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["Constant", "From file"])
+initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["From file","Constant"])
 unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 

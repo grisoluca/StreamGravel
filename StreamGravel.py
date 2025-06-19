@@ -24,14 +24,14 @@ st.title("Neutron Spectrum Unfolding")
 st.sidebar.header("⚙️ Unfolding parameters")
 initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["From file","Constant"])
 mmin = st.sidebar.number_input(
-    "Min energy for constant guess", 
+    "Min energy [MeV] for constant guess", 
     min_value=0.0, 
     max_value=100000.0, 
     value=1e-8, 
     step=1e1, 
     format="%.1e")
 mmax = st.sidebar.number_input(
-    "Max energy for constant guess", 
+    "Max energy [MeV] for constant guess", 
     min_value=0.0, 
     max_value=100000.0, 
     value=1.0, 

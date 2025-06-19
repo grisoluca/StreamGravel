@@ -23,14 +23,14 @@ st.title("ficisdf")
 st.sidebar.header("⚙️ Unfolding parameters")
 initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["From file","Constant"])
 mmin = st.sidebar.number_input(
-    "Estremo inferiore (xmin)", 
+    "Min energy for constant guess", 
     min_value=0.0, 
     max_value=100000.0, 
     value=1e-8, 
     step=0.01, 
     format="%.6f")
 mmax = st.sidebar.number_input(
-    "Estremo superiore (xmax)", 
+    "Max energy for constant guess", 
     min_value=0.0, 
     max_value=100000.0, 
     value=1.0, 

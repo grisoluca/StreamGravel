@@ -12,12 +12,13 @@ import io
 st.set_page_config(
     page_title="GRAVEL Unfolding",
     page_icon="LogoNML-Black.png",  # può essere un'emoji o un file
+    initial_sidebar_state="expanded",
     layout="wide"
 )
 
 #st.set_page_config(layout="wide")
-st.title("Neutron Spectrum Unfolsdding")
-st.title("fdfffffffffffffffffff")
+st.title("Neutron Spectrum Unfolding")
+#st.title("fdfffffffffffffffffff")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
@@ -27,15 +28,15 @@ mmin = st.sidebar.number_input(
     min_value=0.0, 
     max_value=100000.0, 
     value=1e-8, 
-    step=0.01, 
-    format="%.6f")
+    step=1e1, 
+    format="%.1e")
 mmax = st.sidebar.number_input(
     "Max energy for constant guess", 
     min_value=0.0, 
     max_value=100000.0, 
     value=1.0, 
-    step=0.01, 
-    format="%.6f")
+    step=1e1, 
+    format="%.1e")
 unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 

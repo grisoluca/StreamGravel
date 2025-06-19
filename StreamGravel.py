@@ -22,6 +22,20 @@ st.title("Neutron Spectrum Unfolding")
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
 initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["From file","Constant"])
+mmin = st.sidebar.number_input(
+    "Estremo inferiore (xmin)", 
+    min_value=0.0, 
+    max_value=100000.0, 
+    value=1e-8, 
+    step=0.01, 
+    format="%.6f")
+mmax = st.sidebar.number_input(
+    "Estremo superiore (xmax)", 
+    min_value=0.0, 
+    max_value=100000.0, 
+    value=1.0, 
+    step=0.01, 
+    format="%.6f")
 unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
     "🔍 Chi-squared value to stop iterations", 
@@ -186,7 +200,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         m = R.shape[1]
         x_const = np.zeros((m,))
-        mask = (xbins > 1e-8) & (xbins < 1)
+        mask = (xbins > mmin) & (xbins < mmax)
         x_const[mask] = 1 / xbins[mask]
     
     

@@ -17,7 +17,7 @@ st.set_page_config(
 
 #st.set_page_config(layout="wide")
 st.title("Neutron Spectrum Unfolding")
-st.title("figccci")
+st.title("fici")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")

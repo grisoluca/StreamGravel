@@ -159,7 +159,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     dE = E_bin_dx-E_bin_sx
 
     for idx in selected_detectors:
-        ax_preview.plot(E_new, R[idx, :], marker='o', linestyle='-', label=f"Detector {idx}")
+        ax_preview.plot(E_new, R[idx, :], marker='o', linestyle='-', label=f"Det {idx}")
 
     ax_preview.set_xscale("log")
     ax_preview.set_xlabel("Energy [MeV]")

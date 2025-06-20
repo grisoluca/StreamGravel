@@ -164,7 +164,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     ax_preview.set_xscale("log")
     ax_preview.set_xlabel("Energy [MeV]")
     ax_preview.set_ylabel("Response ")
-    ax_preview.legend(fontsize='small')
+    ax_preview.legend(loc='best',fontsize='small')
     ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
     d_col1.pyplot(fig_preview)
 

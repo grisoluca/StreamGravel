@@ -163,8 +163,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
     ax_preview.set_xscale("log")
     ax_preview.set_xlabel("Energy [MeV]")
-    ax_preview.set_ylabel("Response (a.u.)")
-    ax_preview.legend()
+    ax_preview.set_ylabel("Response ")
+    ax_preview.legend(fontsize='small')
     ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
     d_col1.pyplot(fig_preview)
 
@@ -227,7 +227,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.step(xbins, xg * xbins,where='mid',color='red', label="GRAVEL")
         ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
-        ax1.set_ylabel("Normalized Counts")
+        ax1.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
         

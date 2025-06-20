@@ -70,6 +70,7 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
     axC.plot(meas, label="measured")
     axC.plot(rdot, label="evaluated")
+    axC.set_ylabel("Counts")
     axC.legend()
     #col.pyplot(figC)
 

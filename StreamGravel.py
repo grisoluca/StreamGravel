@@ -224,7 +224,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         # --- Plot risultati
         fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
         ax1.step(xbins, xguess * xbins,where='mid',color='blue', label="Guess Spectrum")
-        ax1.step(xbins, xg * xbins,where='mid',color='red', label="GRAVEL")
+        ax1.step(xbins, xg * xbins,where='mid',color='red', label=f'{unfolding_type}')
         ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
         ax1.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")

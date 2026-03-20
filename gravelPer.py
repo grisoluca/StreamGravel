@@ -2,15 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def gravel(R, data, x, tolerance, energy_file, max_iter):
-    x = x.astype(float).copy()
-    n, m = R.shape
-    eps = 1e-300
+    x = np.array(x, dtype=float).copy()
+    data = np.array(data, dtype=float)
+    eps = 1e-30
 
     mask = data[:, 0] > 0
     R = R[mask, :]
-    data = np.array(data)[mask]
-    meas = data[:, 0]
-    uncer = data[:, 1]
+    meas = data[mask, 0]
+    n, m = R.shape
 
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
@@ -20,18 +19,22 @@ def gravel(R, data, x, tolerance, energy_file, max_iter):
     stepcount = 1
 
     rdot = R @ (x * dE)
-    J0 = np.sum((np.log(np.clip(rdot, eps, None)) - np.log(np.clip(meas, eps, None)))**2)
+    rdot = np.clip(rdot, eps, None)
+    meas = np.clip(meas, eps, None)
+
+    J0 = np.sum((np.log(rdot) - np.log(meas))**2)
     logIter = f"Initial J = {J0:.2e}\n"
 
     while J0 > tolerance and stepcount <= max_iter:
         rdot = np.clip(R @ (x * dE), eps, None)
+        x_old = x.copy()
 
         for j in range(m):
-            Wij = R[:, j] * x[j] * dE[j] / rdot
+            Wij = R[:, j] * x_old[j] * dE[j] / rdot
             den = np.sum(Wij)
             if den > 0:
                 num = np.sum(Wij * np.log(meas / rdot))
-                x[j] *= np.exp(num / den)
+                x[j] = x_old[j] * np.exp(num / den)
 
         rdot = np.clip(R @ (x * dE), eps, None)
         J = np.sum((np.log(rdot) - np.log(meas))**2)

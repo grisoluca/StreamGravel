@@ -231,6 +231,17 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
         
+        # --- Secondo plot: x log, y log
+        fig2, ax2 = plt.subplots(figsize=(6, 4), layout='constrained')
+        ax2.step(xbins, xguess * xbins, where='mid', color='blue', label="Guess Spectrum")
+        ax2.step(xbins, xg * xbins, where='mid', color='red', label=f'{unfolding_type}')
+        ax2.set_xscale("log")
+        ax2.set_yscale("log")
+        ax2.set_xlabel("Neutron Energy (MeV)")
+        ax2.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")
+        ax2.grid(True, which="both", ls="--", alpha=0.5)
+        ax2.legend()
+        
         figJ, axJ = plt.subplots(figsize=(6, 4), layout='constrained')
         axJ.plot(range(1, len(errorg) + 1), errorg, marker='o')
         axJ.set_xlabel("Iteration")
@@ -252,6 +263,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                     d_col2.pyplot(figInt)
                 #d_col2.pyplot(figInt)
                 d_col2.pyplot(fig1)
+                d_col2.pyplot(fig2)
                     
                 with st.sidebar.expander("📘 Iteration log"):
                     st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")

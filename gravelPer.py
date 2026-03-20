@@ -100,11 +100,11 @@ def gravel(R, data, x, tolerance, energy_file, max_iter,
             log_lines.append(f"Stop: J <= tolerance at iteration {stepcount}")
             break
 
-        if worse_count >= stop_rise_patience:
-            log_lines.append(
-                f"Stop: J worsened for {stop_rise_patience} iterations after best iter {best_iter}"
-            )
-            break
+        #if worse_count >= stop_rise_patience:
+        #    log_lines.append(
+        #        f"Stop: J worsened for {stop_rise_patience} iterations after best iter {best_iter}"
+        #    )
+        #    break
 
         #if rel_change < 1e-8:
         #    log_lines.append(f"Stop: rel_change < 1e-8 at iteration {stepcount}")

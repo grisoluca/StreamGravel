@@ -106,9 +106,9 @@ def gravel(R, data, x, tolerance, energy_file, max_iter,
             )
             break
 
-        if rel_change < 1e-8:
-            log_lines.append(f"Stop: rel_change < 1e-8 at iteration {stepcount}")
-            break
+        #if rel_change < 1e-8:
+        #    log_lines.append(f"Stop: rel_change < 1e-8 at iteration {stepcount}")
+        #    break
 
         stepcount += 1
 

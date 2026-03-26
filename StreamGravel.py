@@ -255,8 +255,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         
         # --- Secondo plot: x log, y log
         fig2, ax2 = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax2.step(xbins, xguess * xbins, where='mid', color='blue', label="Guess Spectrum")
-        ax2.step(xbins, xg * xbins, where='mid', color='red', label=f'{unfolding_type}')
+        ax2.step(xbins, xguess_norm * xbins, where='mid', color='blue', label="Guess Spectrum")
+        ax2.step(xbins, xg_norm * xbins, where='mid', color='red', label=f'{unfolding_type}')
         ax2.set_xscale("log")
         ax2.set_yscale("log")
         ax2.set_xlabel("Neutron Energy (MeV)")

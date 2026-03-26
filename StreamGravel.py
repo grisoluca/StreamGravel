@@ -218,13 +218,35 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         
         #d_col1.pyplot(figC)
         # Normalizzazione
-        xguess /= np.sum(xguess)
-        xg /= np.sum(xg)
+        #xguess /= np.sum(xguess)
+        #xg /= np.sum(xg)
+        
+        # --- Normalizzazione sugli integrali in energia ∫ x(E) dE = 1
+        energy_file.seek(0)
+        energies = np.loadtxt(energy_file, delimiter='\t')
+        E_bin_sx = energies[:, 0]
+        E_bin_dx = energies[:, 1]
+        dE = E_bin_dx - E_bin_sx
+
+        # integrali (area fisica)
+        area_guess = np.sum(xguess * dE)
+        area_unf   = np.sum(xg     * dE)
+
+        # evita divisioni per zero
+        if area_guess > 0:
+            xguess_norm = xguess / area_guess
+        else:
+            xguess_norm = xguess
+
+        if area_unf > 0:
+            xg_norm = xg / area_unf
+        else:
+            xg_norm = xg
 
         # --- Plot risultati
         fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax1.step(xbins, xguess * xbins,where='mid',color='blue', label="Guess Spectrum")
-        ax1.step(xbins, xg * xbins,where='mid',color='red', label=f'{unfolding_type}')
+        ax1.step(xbins, xguess_norm * xbins,where='mid',color='blue', label="Guess Spectrum")
+        ax1.step(xbins, xg_norm * xbins,where='mid',color='red', label=f'{unfolding_type}')
         ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
         ax1.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")

@@ -229,19 +229,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         dE = E_bin_dx - E_bin_sx
 
         # integrali (area fisica)
-        area_guess = np.sum(xguess * dE)
-        area_unf   = np.sum(xg     * dE)
+        integral_fluence_guess = np.sum(xguess * dE)
+        integral_fluence_unf = np.sum(xg * dE)
 
         # evita divisioni per zero
-        if area_guess > 0:
-            xguess_norm = xguess / area_guess
-        else:
-            xguess_norm = xguess
-
-        if area_unf > 0:
-            xg_norm = xg / area_unf
-        else:
-            xg_norm = xg
+        xguess_norm = xguess
+        xg_norm = xg
 
         # --- Plot risultati
         fig1, ax1 = plt.subplots(figsize=(6, 4), layout='constrained')
@@ -281,6 +274,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             
             with st.container():  # 👈 questo fissa la posizione
                 d_col1.pyplot(figC)
+                flu_col1, flu_col2 = st.columns(2)
+                flu_col1.metric("Integral fluence - Guess [cm-2]", f"{integral_fluence_guess:.4e}")
+                flu_col2.metric(f"Integral fluence - {unfolding_type} [cm-2]", f"{integral_fluence_unf:.4e}")
                 if 'figInt' in globals():
                     d_col2.pyplot(figInt)
                 #d_col2.pyplot(figInt)
@@ -296,7 +292,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.sidebar.markdown("### 📦 Results Download ")
         csv_out = np.column_stack((xbins, xg))
         csv_str = io.StringIO()
-        np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (norm)', comments='')
+        np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (dPhi/dE)', comments='')
         st.sidebar.download_button("📥 Dowload unfolded spectrum", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
 
 

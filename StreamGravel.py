@@ -275,8 +275,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             with st.container():  # 👈 questo fissa la posizione
                 d_col1.pyplot(figC)
                 flu_col1, flu_col2 = st.columns(2)
-                flu_col1.metric("Integral fluence - Guess [cm-2]", f"{integral_fluence_guess:.4e}")
-                flu_col2.metric(f"Integral fluence - {unfolding_type} [cm-2]", f"{integral_fluence_unf:.4e}")
+                flu_col1.metric("Integral fluence - Guess [cm-2 s-1]", f"{integral_fluence_guess:.4e}")
+                flu_col2.metric(f"Integral fluence - {unfolding_type} [cm-2 s-1]", f"{integral_fluence_unf:.4e}")
                 if 'figInt' in globals():
                     d_col2.pyplot(figInt)
                 #d_col2.pyplot(figInt)

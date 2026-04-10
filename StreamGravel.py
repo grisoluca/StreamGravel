@@ -242,7 +242,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax1.step(xbins, xg_norm * xbins,where='mid',color='red', label=f'{unfolding_type}')
         ax1.set_xscale("log")
         ax1.set_xlabel("Neutron Energy (MeV)")
-        ax1.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")
+        ax1.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2 s-1]")
         ax1.grid(True, which="both", ls="--", alpha=0.5)
         ax1.legend()
         
@@ -253,7 +253,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax2.set_xscale("log")
         ax2.set_yscale("log")
         ax2.set_xlabel("Neutron Energy (MeV)")
-        ax2.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2]")
+        ax2.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2 s-1]")
         ax2.grid(True, which="both", ls="--", alpha=0.5)
         ax2.legend()
         

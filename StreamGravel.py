@@ -122,29 +122,32 @@ with st.container ():
 if 'load_matrices_clicked' not in st.session_state:
     st.session_state.load_matrices_clicked = False
 
-if st.button("🚀 Load Data"):
+if st.sidebar.button("🚀 Load Data"):
     st.session_state.load_matrices_clicked = True
 
 # Ora, solo se i file sono caricati
 if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_file:
     
-    col1, col2 = st.columns(2)
-    d_col1, d_col2 = st.columns(2)
+    response_tab, fit_tab, spectra_tab = st.tabs(["Response", "Fit", "Spectra"])
     
     # Rileva se uno dei file è cambiato
     file_changed = (
         'last_response_file' not in st.session_state or response_file != st.session_state.last_response_file or
         'last_counts_file' not in st.session_state or counts_file != st.session_state.last_counts_file or
-        'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file
+        'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file or
+        'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file
     )
 
     if file_changed:
-        R, data = response_matrix(response_file, counts_file, energy_file, col1)
+        with response_tab:
+            R, data = response_matrix(response_file, counts_file, energy_file, response_tab)
         st.session_state.R = R
         st.session_state.data = data
         st.session_state.last_response_file = response_file
         st.session_state.last_counts_file = counts_file
         st.session_state.last_energy_file = energy_file
+        st.session_state.last_guess_file = guess_file
+        st.session_state.pop("unfolding_outputs", None)
 
     R = st.session_state.R
     data = st.session_state.data
@@ -156,24 +159,27 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     if 'detector_states' not in st.session_state:
         st.session_state.detector_states = {i: True for i in detectors_list}
 
-    st.subheader("📦 Select/Deselect Response Functions:")
+    response_tab.subheader("Select/Deselect Response Functions")
 
-    for i in detectors_list:
-        st.session_state.detector_states[i] = st.checkbox(
-            f"Detector #{i}",
-            value=st.session_state.detector_states[i],
-            key=f"detector_{i}"
-        )
+    detector_cols = response_tab.columns(4)
+    for pos, i in enumerate(detectors_list):
+        with detector_cols[pos % 4]:
+            st.session_state.detector_states[i] = st.checkbox(
+                f"Detector #{i}",
+                value=st.session_state.detector_states[i],
+                key=f"detector_{i}"
+            )
 
     selected_detectors = [i for i in detectors_list if st.session_state.detector_states[i]]
 
     if not selected_detectors:
-        st.warning("⚠️You need to select at least one response function.")
+        response_tab.warning("You need to select at least one response function.")
         st.stop()
 
     # --- Anteprima grafica delle funzioni selezionate
     #st.subheader("👀 Preview of the selected response function:")
-    fig_preview, ax_preview = plt.subplots(figsize=(6, 4), layout='constrained')
+    response_tab.subheader("Selected response preview")
+    fig_preview, ax_preview = plt.subplots(figsize=(7, 4), layout='constrained')
 
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
@@ -187,10 +193,10 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
     ax_preview.set_xscale("log")
     ax_preview.set_xlabel("Energy [MeV]")
-    ax_preview.set_ylabel("Response ")
+    ax_preview.set_ylabel("Response")
     ax_preview.legend(loc='best',fontsize='small')
-    ax_preview.grid(True, which="both", linestyle="--", alpha=0.5)
-    d_col1.pyplot(fig_preview)
+    ax_preview.grid(True, which="both", linestyle="--", alpha=0.35)
+    response_tab.pyplot(fig_preview, use_container_width=True)
 
    # Flag di stato per mostrare i grafici solo dopo il click su "Run Unfolding"
     if 'unfolding_done' not in st.session_state:
@@ -294,32 +300,80 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         
         # Segna che abbiamo fatto il run
         st.session_state.unfolding_done = True
+        st.session_state.unfolding_outputs = {
+            "algorithm": unfolding_type,
+            "fig_counts": figC,
+            "fig_rebin": figInt if 'figInt' in locals() else None,
+            "fig_chi": figJ,
+            "xbins": xbins,
+            "xguess": xguess_norm,
+            "xg": xg,
+            "log": logIter,
+            "integral_guess": integral_fluence_guess,
+            "integral_unfolded": integral_fluence_unf,
+        }
         
-        if st.session_state.unfolding_done:
-            
-            with st.container():  # 👈 questo fissa la posizione
-                d_col1.pyplot(figC)
-                flu_col1, flu_col2 = st.columns(2)
-                flu_col1.metric("Integral fluence - Guess [cm-2 s-1]", f"{integral_fluence_guess:.4e}")
-                flu_col2.metric(f"Integral fluence - {unfolding_type} [cm-2 s-1]", f"{integral_fluence_unf:.4e}")
-                if 'figInt' in globals():
-                    d_col2.pyplot(figInt)
-                #d_col2.pyplot(figInt)
-                d_col2.pyplot(fig1)
-                d_col2.pyplot(fig2)
-                    
-                with st.sidebar.expander("📘 Iteration log"):
-                    st.text_area(f"Output {unfolding_type}", value=logIter, height=300, disabled=True)
-                    st.pyplot(figJ)
+    if 'unfolding_outputs' in st.session_state:
+        outputs = st.session_state.unfolding_outputs
 
-        #d_col2.pyplot(fig1)
-        # --- DOWNLOAD
-        st.sidebar.markdown("### 📦 Results Download ")
-        csv_out = np.column_stack((xbins, xg))
+        fit_tab.subheader("Fit quality")
+        fit_col1, fit_col2 = fit_tab.columns(2)
+        fit_col1.pyplot(outputs["fig_counts"], use_container_width=True)
+        fit_col2.pyplot(outputs["fig_chi"], use_container_width=True)
+
+        with fit_tab.expander("Iteration log", expanded=True):
+            st.text_area(
+                f"Output {outputs['algorithm']}",
+                value=outputs["log"],
+                height=300,
+                disabled=True
+            )
+
+        spectra_tab.subheader("Spectrum results")
+        flu_col1, flu_col2 = spectra_tab.columns(2)
+        flu_col1.metric("Integral fluence - Guess [cm-2 s-1]", f"{outputs['integral_guess']:.4e}")
+        flu_col2.metric(
+            f"Integral fluence - {outputs['algorithm']} [cm-2 s-1]",
+            f"{outputs['integral_unfolded']:.4e}"
+        )
+
+        if outputs["fig_rebin"] is not None:
+            with spectra_tab.expander("Rebinning preview"):
+                st.pyplot(outputs["fig_rebin"], use_container_width=True)
+
+        fig_linear, ax_linear = plt.subplots(figsize=(7, 4), layout='constrained')
+        ax_linear.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label="Guess Spectrum")
+        ax_linear.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
+        ax_linear.set_xscale("log")
+        ax_linear.set_xlabel("Neutron Energy (MeV)")
+        ax_linear.set_ylabel("Fluence per unit lethargy (dÎ¦/dE*E) [cm-2 s-1]")
+        ax_linear.grid(True, which="both", ls="--", alpha=0.35)
+        ax_linear.legend()
+
+        fig_log, ax_log = plt.subplots(figsize=(7, 4), layout='constrained')
+        ax_log.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label="Guess Spectrum")
+        ax_log.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
+        ax_log.set_xscale("log")
+        ax_log.set_yscale("log")
+        ax_log.set_ylim(log_plot_ymin, log_plot_ymax)
+        ax_log.set_xlabel("Neutron Energy (MeV)")
+        ax_log.set_ylabel("Fluence per unit lethargy (dÎ¦/dE*E) [cm-2 s-1]")
+        ax_log.grid(True, which="both", ls="--", alpha=0.35)
+        ax_log.legend()
+
+        spectrum_col1, spectrum_col2 = spectra_tab.columns(2)
+        spectrum_col1.pyplot(fig_linear, use_container_width=True)
+        spectrum_col2.pyplot(fig_log, use_container_width=True)
+
+        spectra_tab.markdown("### Results Download")
+        csv_out = np.column_stack((outputs["xbins"], outputs["xg"]))
         csv_str = io.StringIO()
         np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (dPhi/dE)', comments='')
-        st.sidebar.download_button("📥 Dowload unfolded spectrum", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
+        spectra_tab.download_button("Download unfolded spectrum", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
+    else:
+        fit_tab.info("Run unfolding to show fit quality and iteration log.")
+        spectra_tab.info("Run unfolding to show spectrum results.")
 
 
 else:
-    st.info("Upload all files and click on 'Run Unfolding' to start.")
+    st.info("Upload all files and click on 'Load Data' in the sidebar to start.")

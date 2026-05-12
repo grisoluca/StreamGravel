@@ -1,12 +1,17 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 from gravel import gravel
 from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
 import matplotlib.ticker as ticker
 import io
+
+APP_DIR = Path(__file__).resolve().parent
+EXAMPLES_DIR = APP_DIR / "examples"
+EXAMPLE_LINAC_ZIP = EXAMPLES_DIR / "example-LINAC.zip"
 
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(
@@ -57,7 +62,7 @@ max_iter = st.sidebar.number_input(
 # --------------------- ESEMPI SCARICA---------------------
 st.markdown("### 📦 Download here an example file")
 with st.expander("📦 Expand for example"):
-    with open("example-LINAC.zip", "rb") as f:
+    with EXAMPLE_LINAC_ZIP.open("rb") as f:
         st.download_button(
             label="⬇️ Download Example - LINAC",
             data=f,

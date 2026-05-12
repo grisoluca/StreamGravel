@@ -257,7 +257,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax2.step(xbins, xg_norm * xbins, where='mid', color='red', label=f'{unfolding_type}')
         ax2.set_xscale("log")
         ax2.set_yscale("log")
-        ax2.set_ylim(bottom=1e-7)
+        ax2.set_ylim(1e-4, 1e13)
         ax2.set_xlabel("Neutron Energy (MeV)")
         ax2.set_ylabel("Fluence per unit lethargy (dΦ/dE*E) [cm-2 s-1]")
         ax2.grid(True, which="both", ls="--", alpha=0.5)

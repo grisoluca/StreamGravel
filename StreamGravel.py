@@ -289,7 +289,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 d_col2.pyplot(fig2)
                     
                 with st.sidebar.expander("📘 Iteration log"):
-                    st.text_area("Output GRAVEL", logIter, height=300,key="log_iter_output")
+                    st.text_area(f"Output {unfolding_type}", value=logIter, height=300, disabled=True)
                     st.pyplot(figJ)
 
         #d_col2.pyplot(fig1)

@@ -31,6 +31,7 @@ def gravel(R, data, x, tolerance, energy_file, max_iter,
     R = R[mask, :]
     meas = np.clip(data[mask, 0], eps, None)
     uncer = np.clip(data[mask, 1], eps, None)
+    inv_rho2 = 1 / np.square(uncer)
 
     energy_file.seek(0)
     energies = np.loadtxt(energy_file, delimiter='\t')
@@ -46,7 +47,8 @@ def gravel(R, data, x, tolerance, energy_file, max_iter,
 
     def merit(phi):
         r = forward(phi)
-        J = np.sum(((np.log(r) - np.log(meas)) ** 2) / uncer)
+        chi2 = np.sum(np.square(np.log(r) - np.log(meas)) * inv_rho2)
+        J = chi2 / len(meas)
         return J, r
 
     error = []
@@ -67,11 +69,12 @@ def gravel(R, data, x, tolerance, energy_file, max_iter,
         rdot = forward(x_old)
 
         for j in range(R.shape[1]):
-            Wij = meas * R[:, j] * x_old[j] * dE[j] / rdot
-            den = np.sum(Wij)
+            Wij = R[:, j] * x_old[j] * dE[j] / rdot
+            weighted_Wij = Wij * inv_rho2
+            den = np.sum(weighted_Wij)
 
             if den > 0:
-                num = np.sum(Wij * np.log(meas / rdot))
+                num = np.sum(weighted_Wij * np.log(meas / rdot))
                 x[j] = x_old[j] * np.exp(num / den)
             else:
                 x[j] = x_old[j]

@@ -44,10 +44,10 @@ mmax = st.sidebar.number_input(
     format="%.1e")
 unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
 tol = st.sidebar.number_input(
-    "🔍 Chi-squared value to stop iterations", 
+    "🔍 Reduced chi-squared value to stop iterations",
     min_value=1e-12, 
     max_value=10.0, 
-    value=1e-1, 
+    value=1.0,
     step=1e-2, 
     format="%.2e"
 )
@@ -265,8 +265,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         figJ, axJ = plt.subplots(figsize=(6, 4), layout='constrained')
         axJ.plot(range(1, len(errorg) + 1), errorg, marker='o')
         axJ.set_xlabel("Iteration")
-        axJ.set_ylabel("Chi-squared J")
-        axJ.set_title("Chi-squared convergence")
+        axJ.set_ylabel("Reduced chi-squared J")
+        axJ.set_title("Reduced chi-squared convergence")
         axJ.grid(True, which='both', linestyle='--', alpha=0.5)
         axJ.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
         axJ.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))

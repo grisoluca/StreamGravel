@@ -11,13 +11,15 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     tolerance --> user-defined stopping condition
     """
     x = x.copy()
+    eps = 1e-300
     n = R.shape[0]
     m = R.shape[1]
     # eliminate any channel with 0 count
     R = np.array([R[i] for i in range(n) if data[i,0] != 0])
     data = np.array(data)
-    meas = data[data[:, 0] > 0][:, 0]
-    uncer = data[data[:, 0] > 0][:, 1] #relative uncertainties rho=sigma/misura
+    meas = np.clip(data[data[:, 0] > 0][:, 0], eps, None)
+    uncer = np.clip(data[data[:, 0] > 0][:, 1], eps, None) #relative uncertainties rho=sigma/misura
+    inv_rho2 = 1 / np.square(uncer)
     # redefine number of rows after the reduction
     n = R.shape[0]
     error = []
@@ -30,34 +32,32 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     #E_new = energies[:, 2] # bin centrale
     dE = E_bin_dx-E_bin_sx
 
-    rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-    #J0 = np.sum((rdot - meas) ** 2) / np.sum(rdot)
-    J0 = np.sum(((np.log(rdot) - np.log(meas)) ** 2)/uncer)
-    logIter = f"Initial chi-squared J = {J0:.2e}\n"
-    
-   
-    
-    logIter = ""
-    
+    x = np.clip(x, eps, None)
+    rdot = np.clip(np.array([np.sum(R[i, :] * x * dE) for i in range(n)]), eps, None)
+    chi2 = np.sum(np.square(np.log(rdot) - np.log(meas)) * inv_rho2)
+    J0 = chi2 / n
+    logIter = f"Initial reduced chi-squared J = {J0:.2e}\n"
     while J0 > tolerance and stepcount<=max_iter:
         W = np.zeros((n, m))
-        rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
+        rdot = np.clip(np.array([np.sum(R[i, :] * x * dE) for i in range(n)]), eps, None)
 
         for j in range(m):
-            W[:, j] = meas * R[:, j] * x[j] * dE[j] / rdot
-            num = np.dot(W[:, j], log(meas / rdot))
+            W[:, j] = R[:, j] * x[j] * dE[j] / rdot
+            weighted_W = W[:, j] * inv_rho2
+            num = np.dot(weighted_W, log(meas / rdot))
             num = np.nan_to_num(num)
-            den = np.sum(W[:, j])
+            den = np.sum(weighted_W)
 
             if den != 0:
                 x[j] *= exp(num / den)
 
-        rdot = np.array([np.sum(R[i, :] * x * dE) for i in range(n)])
-        #J = np.sum((rdot - meas) ** 2) / np.sum(rdot)
-        J = np.sum(((np.log(rdot) - np.log(meas)) ** 2)/uncer)
+        x = np.clip(x, eps, None)
+        rdot = np.clip(np.array([np.sum(R[i, :] * x * dE) for i in range(n)]), eps, None)
+        chi2 = np.sum(np.square(np.log(rdot) - np.log(meas)) * inv_rho2)
+        J = chi2 / n
         error.append(J)
 
-        logIter += f"Iteration {stepcount}, chi-squared J = {J:.2e}\n"
+        logIter += f"Iteration {stepcount}, reduced chi-squared J = {J:.2e}\n"
         stepcount += 1
         J0 = J
         

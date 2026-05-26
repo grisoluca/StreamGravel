@@ -9,10 +9,27 @@ DEFAULT_ANN_PROJECT_DIR = Path(
 EPS = 1e-30
 
 
+def resolve_ann_models_dir(project_dir):
+    """Accept either the ANN project folder or its models folder."""
+    base_dir = Path(project_dir).expanduser()
+    candidates = []
+
+    if base_dir.name.lower() in {"model", "models"}:
+        candidates.extend([base_dir, base_dir.with_name("models")])
+
+    candidates.extend([base_dir / "models", base_dir])
+
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_dir():
+            return candidate
+
+    return None
+
+
 def find_latest_ann_model(project_dir):
     """Return the newest absolute ANN checkpoint in an ANN project folder."""
-    models_dir = Path(project_dir).expanduser() / "models"
-    if not models_dir.exists():
+    models_dir = resolve_ann_models_dir(project_dir)
+    if models_dir is None:
         return None
 
     checkpoints = list(models_dir.glob("*.pt"))
@@ -22,6 +39,28 @@ def find_latest_ann_model(project_dir):
     absolute_models = [p for p in checkpoints if "absolute" in p.name.lower()]
     candidates = absolute_models or checkpoints
     return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
+def resolve_ann_model_path(model_path, project_dir=None):
+    """Resolve a checkpoint from an absolute path, a filename, or an ANN folder."""
+    model = Path(model_path).expanduser()
+    if model.exists():
+        return model
+
+    candidates = []
+    if project_dir is not None:
+        models_dir = resolve_ann_models_dir(project_dir)
+        if models_dir is not None:
+            candidates.append(models_dir / model.name)
+        candidates.append(Path(project_dir).expanduser() / model.name)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    searched = ", ".join(str(candidate) for candidate in candidates)
+    details = f" Searched also: {searched}" if searched else ""
+    raise FileNotFoundError(f"ANN checkpoint not found: {model}.{details}")
 
 
 def _integrate_trapezoid(y, x, axis=-1):
@@ -67,7 +106,7 @@ def _build_absolute_model(torch, in_dim, out_dim):
     return AbsoluteUnfoldingMLP()
 
 
-def predict_absolute_guess(counts_raw, model_path):
+def predict_absolute_guess(counts_raw, model_path, project_dir=None):
     """Predict an absolute differential spectrum from raw detector counts.
 
     The ANN checkpoint returns dPhi/dE in cm^-2 s^-1 eV^-1. StreamGravel uses
@@ -81,9 +120,7 @@ def predict_absolute_guess(counts_raw, model_path):
             "Install torch or choose another initial guess mode."
         ) from exc
 
-    model_path = Path(model_path).expanduser()
-    if not model_path.exists():
-        raise FileNotFoundError(f"ANN checkpoint not found: {model_path}")
+    model_path = resolve_ann_model_path(model_path, project_dir)
 
     counts = np.asarray(counts_raw, dtype=np.float32)
     if counts.ndim == 1:

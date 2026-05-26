@@ -83,20 +83,22 @@ if log_plot_ymax <= log_plot_ymin:
     st.stop()
 
 ann_model_path = ""
+selected_ann_model_path = ""
 if initial_guess_type == "Neural network":
     st.sidebar.markdown("#### Neural-network guess")
     ann_project_dir = st.sidebar.text_input(
         "ANN project folder",
         value=str(DEFAULT_ANN_PROJECT_DIR),
-        help="Folder containing the ANN models/ directory.",
+        help="You can use the ANN folder itself or its models subfolder.",
     )
     latest_ann_model = find_latest_ann_model(ann_project_dir)
     default_ann_model = str(latest_ann_model) if latest_ann_model else ""
     ann_model_path = st.sidebar.text_input(
-        "ANN checkpoint (.pt)",
+        "ANN checkpoint (.pt, optional)",
         value=default_ann_model,
-        help="By default StreamGravel uses the newest absolute ANN checkpoint.",
+        help="Leave empty to use the newest absolute ANN checkpoint found in the folder above.",
     )
+    selected_ann_model_path = ann_model_path or default_ann_model
     if latest_ann_model:
         st.sidebar.caption(f"Latest detected model: {latest_ann_model.name}")
     else:
@@ -167,7 +169,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file or
         'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file or
         'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
-        'last_ann_model_path' not in st.session_state or ann_model_path != st.session_state.last_ann_model_path
+        'last_ann_model_path' not in st.session_state or selected_ann_model_path != st.session_state.last_ann_model_path
     )
 
     if file_changed:
@@ -180,7 +182,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_energy_file = energy_file
         st.session_state.last_guess_file = guess_file
         st.session_state.last_initial_guess_type = initial_guess_type
-        st.session_state.last_ann_model_path = ann_model_path
+        st.session_state.last_ann_model_path = selected_ann_model_path
         st.session_state.pop("unfolding_outputs", None)
 
     R = st.session_state.R
@@ -267,12 +269,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             else:
                 xguess = xguess_raw
         elif initial_guess_type == "Neural network":
-            if not ann_model_path:
+            if not selected_ann_model_path:
                 st.error("Select an ANN checkpoint before running the neural-network guess.")
                 st.stop()
 
             try:
-                ann_guess = predict_absolute_guess(data_for_guess[:, 0], ann_model_path)
+                ann_guess = predict_absolute_guess(data_for_guess[:, 0], selected_ann_model_path, ann_project_dir)
             except Exception as exc:
                 st.error(f"Neural-network guess failed: {exc}")
                 st.stop()

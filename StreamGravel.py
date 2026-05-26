@@ -6,13 +6,36 @@ from gravel import gravel
 from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
-from ann_guess import DEFAULT_ANN_PROJECT_DIR, find_latest_ann_model, predict_absolute_guess
+from ann_guess import predict_absolute_guess
 import matplotlib.ticker as ticker
 import io
 
 APP_DIR = Path(__file__).resolve().parent
 EXAMPLES_DIR = APP_DIR / "examples"
 EXAMPLE_LINAC_ZIP = EXAMPLES_DIR / "example-LINAC.zip"
+
+
+def load_guess_spectrum(uploaded_file, is_lethargic, energy_file, target_xbins, target_len):
+    uploaded_file.seek(0)
+    guess_spect = np.loadtxt(uploaded_file, delimiter='\t')
+    xbins_guess = guess_spect[:, 0]
+    xguess_raw = guess_spect[:, 1]
+
+    if is_lethargic:
+        xguess_raw = xguess_raw / xbins_guess
+
+    needs_rebin = (
+        len(xguess_raw) != target_len
+        or not np.allclose(xbins_guess, target_xbins, rtol=1e-3, atol=0.0)
+    )
+    if needs_rebin:
+        _, xguess, fig_rebin = rebin(xbins_guess, xguess_raw, energy_file)
+    else:
+        xguess = xguess_raw
+        fig_rebin = None
+
+    return xguess, fig_rebin
+
 
 # --------------------- CONFIGURAZIONE ---------------------
 st.set_page_config(
@@ -82,39 +105,20 @@ if log_plot_ymax <= log_plot_ymin:
     st.sidebar.error("Log-log plot y max must be greater than y min.")
     st.stop()
 
-ann_model_path = ""
-selected_ann_model_path = ""
-ann_project_dir = str(DEFAULT_ANN_PROJECT_DIR)
 ann_uploaded_model = None
+selected_ann_model_path = None
+selected_ann_model_key = ""
 if initial_guess_type == "Neural network":
     st.sidebar.markdown("#### Neural-network guess")
-    ann_project_dir = st.sidebar.text_input(
-        "ANN project folder",
-        value=str(DEFAULT_ANN_PROJECT_DIR),
-        help="You can use the ANN folder itself or its models subfolder.",
-    )
-    latest_ann_model = find_latest_ann_model(ann_project_dir)
-    default_ann_model = str(latest_ann_model) if latest_ann_model else ""
-    ann_model_path = st.sidebar.text_input(
-        "ANN checkpoint (.pt, optional)",
-        value=default_ann_model,
-        help="Leave empty to use the newest absolute ANN checkpoint found in the folder above.",
-    )
     ann_uploaded_model = st.sidebar.file_uploader(
-        "Or upload ANN checkpoint (.pt)",
+        "Upload ANN checkpoint (.pt)",
         type="pt",
-        help="Use this if the app cannot access the ANN project folder path.",
+        help="Upload the absolute ANN checkpoint to use as the initial GRAVEL guess.",
     )
-    selected_ann_model_path = ann_uploaded_model or ann_model_path or default_ann_model
-    selected_ann_model_key = (
-        ann_uploaded_model.name if ann_uploaded_model is not None else str(selected_ann_model_path)
-    )
-    if latest_ann_model:
-        st.sidebar.caption(f"Latest detected model: {latest_ann_model.name}")
-    else:
-        st.sidebar.warning("No .pt model found in the selected ANN project folder. Upload a checkpoint or check the path.")
-else:
-    selected_ann_model_key = ""
+    selected_ann_model_path = ann_uploaded_model
+    selected_ann_model_key = ann_uploaded_model.name if ann_uploaded_model is not None else ""
+    if ann_uploaded_model is None:
+        st.sidebar.info("Upload a .pt checkpoint to enable the neural-network guess.")
 
 # --------------------- ESEMPI SCARICA---------------------
 st.markdown("### 📦 Download here an example file")
@@ -148,9 +152,23 @@ with st.container ():
 
     with col_u2:
         energy_file = st.file_uploader("⚡ Energy bins (MeV)", type="txt")
+        comparison_guess_file = None
+        comparison_is_letargic = False
         if initial_guess_type == "From file":
             guess_file = st.file_uploader("🧠 Initial guess spectrum", type="txt")
             is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
+        elif initial_guess_type == "Neural network":
+            guess_file = None
+            is_letargic = False
+            comparison_guess_file = st.file_uploader(
+                "Optional guess spectrum to compare",
+                type="txt",
+                help="This spectrum is plotted only for comparison; GRAVEL still starts from the ANN guess.",
+            )
+            comparison_is_letargic = st.checkbox(
+                "Comparison guess per unit lethargy (in dΦ/dE*E)",
+                value=False,
+            )
         else:
             guess_file = None
             is_letargic = False
@@ -169,7 +187,11 @@ if st.sidebar.button("🚀 Load Data"):
     st.session_state.load_matrices_clicked = True
 
 # Ora, solo se i file sono caricati
-guess_input_ready = initial_guess_type != "From file" or guess_file is not None
+guess_input_ready = (
+    (initial_guess_type == "From file" and guess_file is not None)
+    or (initial_guess_type == "Neural network" and ann_uploaded_model is not None)
+    or initial_guess_type == "Constant"
+)
 if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_input_ready:
     
     response_tab, fit_tab, spectra_tab = st.tabs(["Response", "Fit", "Spectra"])
@@ -180,6 +202,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_counts_file' not in st.session_state or counts_file != st.session_state.last_counts_file or
         'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file or
         'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file or
+        'last_comparison_guess_file' not in st.session_state or comparison_guess_file != st.session_state.last_comparison_guess_file or
+        'last_comparison_is_letargic' not in st.session_state or comparison_is_letargic != st.session_state.last_comparison_is_letargic or
         'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
         'last_ann_model_path' not in st.session_state or selected_ann_model_key != st.session_state.last_ann_model_path
     )
@@ -193,6 +217,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_counts_file = counts_file
         st.session_state.last_energy_file = energy_file
         st.session_state.last_guess_file = guess_file
+        st.session_state.last_comparison_guess_file = comparison_guess_file
+        st.session_state.last_comparison_is_letargic = comparison_is_letargic
         st.session_state.last_initial_guess_type = initial_guess_type
         st.session_state.last_ann_model_path = selected_ann_model_key
         st.session_state.pop("unfolding_outputs", None)
@@ -263,30 +289,24 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xbins = energies[:, 2]  # bin centrali
         figInt = None
         ann_info = None
+        comparison_guess = None
+        comparison_rebin_fig = None
     
         if initial_guess_type == "From file":
-            guess_file.seek(0)
-            guess_spect = np.loadtxt(guess_file, delimiter='\t')
-        
-            xbins_guess = guess_spect[:, 0]
-            xguess_raw = guess_spect[:, 1]
-
-            if is_letargic:
-                # Conversione da dΦ/dlnE → dΦ/dE
-                xguess_raw = xguess_raw / xbins_guess
-
-            if len(xguess_raw) != R.shape[1]:
-                xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)
-                #d_col2.pyplot(figInt)
-            else:
-                xguess = xguess_raw
+            xguess, figInt = load_guess_spectrum(
+                guess_file,
+                is_letargic,
+                energy_file,
+                xbins,
+                R.shape[1],
+            )
         elif initial_guess_type == "Neural network":
             if not selected_ann_model_path:
                 st.error("Select an ANN checkpoint before running the neural-network guess.")
                 st.stop()
 
             try:
-                ann_guess = predict_absolute_guess(data_for_guess[:, 0], selected_ann_model_path, ann_project_dir)
+                ann_guess = predict_absolute_guess(data_for_guess[:, 0], selected_ann_model_path)
             except Exception as exc:
                 st.error(f"Neural-network guess failed: {exc}")
                 st.stop()
@@ -302,6 +322,14 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 "fluence_total": ann_guess["fluence_total"],
                 "device": ann_guess["device"],
             }
+            if comparison_guess_file is not None:
+                comparison_guess, comparison_rebin_fig = load_guess_spectrum(
+                    comparison_guess_file,
+                    comparison_is_letargic,
+                    energy_file,
+                    xbins,
+                    R.shape[1],
+                )
         else:
             xguess = None
 
@@ -339,6 +367,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         # integrali (area fisica)
         integral_fluence_guess = np.sum(xguess * dE)
         integral_fluence_unf = np.sum(xg * dE)
+        integral_fluence_comparison = (
+            np.sum(comparison_guess * dE) if comparison_guess is not None else None
+        )
 
         # evita divisioni per zero
         xguess_norm = xguess
@@ -382,12 +413,15 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             "algorithm": unfolding_type,
             "fig_counts": figC,
             "fig_rebin": figInt if 'figInt' in locals() else None,
+            "fig_comparison_rebin": comparison_rebin_fig,
             "fig_chi": figJ,
             "xbins": xbins,
             "xguess": xguess_norm,
+            "comparison_guess": comparison_guess,
             "xg": xg,
             "log": logIter,
             "integral_guess": integral_fluence_guess,
+            "integral_comparison": integral_fluence_comparison,
             "integral_unfolded": integral_fluence_unf,
             "guess_source": suffix,
             "ann_info": ann_info,
@@ -410,12 +444,17 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             )
 
         spectra_tab.subheader("Spectrum results")
-        flu_col1, flu_col2 = spectra_tab.columns(2)
+        flu_col1, flu_col2, flu_col3 = spectra_tab.columns(3)
         flu_col1.metric("Integral fluence - Guess [cm-2 s-1]", f"{outputs['integral_guess']:.4e}")
         flu_col2.metric(
             f"Integral fluence - {outputs['algorithm']} [cm-2 s-1]",
             f"{outputs['integral_unfolded']:.4e}"
         )
+        if outputs.get("integral_comparison") is not None:
+            flu_col3.metric(
+                "Integral fluence - Uploaded guess [cm-2 s-1]",
+                f"{outputs['integral_comparison']:.4e}",
+            )
         if outputs.get("ann_info"):
             ann_info = outputs["ann_info"]
             spectra_tab.caption(
@@ -427,9 +466,22 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         if outputs["fig_rebin"] is not None:
             with spectra_tab.expander("Rebinning preview"):
                 st.pyplot(outputs["fig_rebin"], use_container_width=True)
+        if outputs.get("fig_comparison_rebin") is not None:
+            with spectra_tab.expander("Uploaded guess rebinning preview"):
+                st.pyplot(outputs["fig_comparison_rebin"], use_container_width=True)
 
         fig_linear, ax_linear = plt.subplots(figsize=(7, 4), layout='constrained')
-        ax_linear.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label="Guess Spectrum")
+        guess_label = "ANN Guess Spectrum" if outputs.get("ann_info") else "Guess Spectrum"
+        ax_linear.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label=guess_label)
+        if outputs.get("comparison_guess") is not None:
+            ax_linear.step(
+                outputs["xbins"],
+                outputs["comparison_guess"] * outputs["xbins"],
+                where='mid',
+                color='green',
+                linestyle='--',
+                label="Uploaded Guess Spectrum",
+            )
         ax_linear.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
         ax_linear.set_xscale("log")
         ax_linear.set_xlabel("Neutron Energy (MeV)")
@@ -438,7 +490,16 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         ax_linear.legend()
 
         fig_log, ax_log = plt.subplots(figsize=(7, 4), layout='constrained')
-        ax_log.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label="Guess Spectrum")
+        ax_log.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label=guess_label)
+        if outputs.get("comparison_guess") is not None:
+            ax_log.step(
+                outputs["xbins"],
+                outputs["comparison_guess"] * outputs["xbins"],
+                where='mid',
+                color='green',
+                linestyle='--',
+                label="Uploaded Guess Spectrum",
+            )
         ax_log.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
         ax_log.set_xscale("log")
         ax_log.set_yscale("log")

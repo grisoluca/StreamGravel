@@ -6,12 +6,20 @@ import numpy as np
 DEFAULT_ANN_PROJECT_DIR = Path(
     r"C:\Users\griso\Desktop\UNI\DOC\Simulations\Untitled Folder\DirSpe_spectra\ANN"
 )
+APP_MODELS_DIR = Path(__file__).resolve().parent / "models"
 EPS = 1e-30
+
+
+def _clean_path(path):
+    return Path(str(path).strip().strip('"').strip("'")).expanduser()
 
 
 def resolve_ann_models_dir(project_dir):
     """Accept either the ANN project folder or its models folder."""
-    base_dir = Path(project_dir).expanduser()
+    if not project_dir:
+        return None
+
+    base_dir = _clean_path(project_dir)
     candidates = []
 
     if base_dir.name.lower() in {"model", "models"}:
@@ -26,13 +34,33 @@ def resolve_ann_models_dir(project_dir):
     return None
 
 
+def _candidate_model_dirs(project_dir=None):
+    candidates = []
+
+    selected_dir = resolve_ann_models_dir(project_dir)
+    if selected_dir is not None:
+        candidates.append(selected_dir)
+
+    default_dir = resolve_ann_models_dir(DEFAULT_ANN_PROJECT_DIR)
+    if default_dir is not None:
+        candidates.append(default_dir)
+
+    candidates.extend([APP_MODELS_DIR, Path.cwd() / "models", Path.cwd()])
+
+    seen = set()
+    for candidate in candidates:
+        candidate = candidate.resolve() if candidate.exists() else candidate
+        if candidate in seen or not candidate.exists() or not candidate.is_dir():
+            continue
+        seen.add(candidate)
+        yield candidate
+
+
 def find_latest_ann_model(project_dir):
     """Return the newest absolute ANN checkpoint in an ANN project folder."""
-    models_dir = resolve_ann_models_dir(project_dir)
-    if models_dir is None:
-        return None
-
-    checkpoints = list(models_dir.glob("*.pt"))
+    checkpoints = []
+    for models_dir in _candidate_model_dirs(project_dir):
+        checkpoints.extend(models_dir.glob("*.pt"))
     if not checkpoints:
         return None
 
@@ -43,16 +71,16 @@ def find_latest_ann_model(project_dir):
 
 def resolve_ann_model_path(model_path, project_dir=None):
     """Resolve a checkpoint from an absolute path, a filename, or an ANN folder."""
-    model = Path(model_path).expanduser()
+    model = _clean_path(model_path)
     if model.exists():
         return model
 
     candidates = []
-    if project_dir is not None:
-        models_dir = resolve_ann_models_dir(project_dir)
-        if models_dir is not None:
-            candidates.append(models_dir / model.name)
-        candidates.append(Path(project_dir).expanduser() / model.name)
+    for models_dir in _candidate_model_dirs(project_dir):
+        candidates.append(models_dir / model.name)
+
+    if project_dir:
+        candidates.append(_clean_path(project_dir) / model.name)
 
     for candidate in candidates:
         if candidate.exists():
@@ -120,7 +148,12 @@ def predict_absolute_guess(counts_raw, model_path, project_dir=None):
             "Install torch or choose another initial guess mode."
         ) from exc
 
-    model_path = resolve_ann_model_path(model_path, project_dir)
+    if hasattr(model_path, "read"):
+        model_source = model_path
+        model_label = getattr(model_path, "name", "uploaded checkpoint")
+    else:
+        model_source = resolve_ann_model_path(model_path, project_dir)
+        model_label = str(model_source)
 
     counts = np.asarray(counts_raw, dtype=np.float32)
     if counts.ndim == 1:
@@ -133,7 +166,9 @@ def predict_absolute_guess(counts_raw, model_path, project_dir=None):
         raise ValueError("ANN input counts must be non-negative.")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+    if hasattr(model_source, "seek"):
+        model_source.seek(0)
+    checkpoint = torch.load(model_source, map_location=device, weights_only=False)
     required = ["model_state_dict", "x_mean", "x_std", "logphi_mean", "logphi_std", "energies"]
     missing = [key for key in required if key not in checkpoint]
     if missing:
@@ -170,6 +205,6 @@ def predict_absolute_guess(counts_raw, model_path, project_dir=None):
         "spectrum_per_mev": spectrum_per_eV[0] * 1.0e6,
         "lethargy_shape": pred_shape[0],
         "fluence_total": float(pred_phi_total[0]),
-        "model_path": str(model_path),
+        "model_path": model_label,
         "device": device,
     }

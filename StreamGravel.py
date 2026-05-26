@@ -84,6 +84,8 @@ if log_plot_ymax <= log_plot_ymin:
 
 ann_model_path = ""
 selected_ann_model_path = ""
+ann_project_dir = str(DEFAULT_ANN_PROJECT_DIR)
+ann_uploaded_model = None
 if initial_guess_type == "Neural network":
     st.sidebar.markdown("#### Neural-network guess")
     ann_project_dir = st.sidebar.text_input(
@@ -98,11 +100,21 @@ if initial_guess_type == "Neural network":
         value=default_ann_model,
         help="Leave empty to use the newest absolute ANN checkpoint found in the folder above.",
     )
-    selected_ann_model_path = ann_model_path or default_ann_model
+    ann_uploaded_model = st.sidebar.file_uploader(
+        "Or upload ANN checkpoint (.pt)",
+        type="pt",
+        help="Use this if the app cannot access the ANN project folder path.",
+    )
+    selected_ann_model_path = ann_uploaded_model or ann_model_path or default_ann_model
+    selected_ann_model_key = (
+        ann_uploaded_model.name if ann_uploaded_model is not None else str(selected_ann_model_path)
+    )
     if latest_ann_model:
         st.sidebar.caption(f"Latest detected model: {latest_ann_model.name}")
     else:
-        st.sidebar.warning("No .pt model found in the selected ANN project folder.")
+        st.sidebar.warning("No .pt model found in the selected ANN project folder. Upload a checkpoint or check the path.")
+else:
+    selected_ann_model_key = ""
 
 # --------------------- ESEMPI SCARICA---------------------
 st.markdown("### 📦 Download here an example file")
@@ -169,7 +181,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file or
         'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file or
         'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
-        'last_ann_model_path' not in st.session_state or selected_ann_model_path != st.session_state.last_ann_model_path
+        'last_ann_model_path' not in st.session_state or selected_ann_model_key != st.session_state.last_ann_model_path
     )
 
     if file_changed:
@@ -182,7 +194,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_energy_file = energy_file
         st.session_state.last_guess_file = guess_file
         st.session_state.last_initial_guess_type = initial_guess_type
-        st.session_state.last_ann_model_path = selected_ann_model_path
+        st.session_state.last_ann_model_path = selected_ann_model_key
         st.session_state.pop("unfolding_outputs", None)
 
     R = st.session_state.R

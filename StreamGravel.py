@@ -6,6 +6,7 @@ from gravel import gravel
 from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
+from ann_guess import DEFAULT_ANN_PROJECT_DIR, find_latest_ann_model, predict_absolute_guess
 import matplotlib.ticker as ticker
 import io
 
@@ -27,7 +28,10 @@ st.title("Neutron Spectrum Unfolding")
 
 # --------------------- SIDEBAR (Controlli) ---------------------
 st.sidebar.header("⚙️ Unfolding parameters")
-initial_guess_type = st.sidebar.selectbox("Initial Guess Spectrum:", ["From file","Constant"])
+initial_guess_type = st.sidebar.selectbox(
+    "Initial Guess Spectrum:",
+    ["From file", "Constant", "Neural network"],
+)
 mmin = st.sidebar.number_input(
     "Min energy [MeV] for constant guess", 
     min_value=0.0, 
@@ -78,6 +82,26 @@ if log_plot_ymax <= log_plot_ymin:
     st.sidebar.error("Log-log plot y max must be greater than y min.")
     st.stop()
 
+ann_model_path = ""
+if initial_guess_type == "Neural network":
+    st.sidebar.markdown("#### Neural-network guess")
+    ann_project_dir = st.sidebar.text_input(
+        "ANN project folder",
+        value=str(DEFAULT_ANN_PROJECT_DIR),
+        help="Folder containing the ANN models/ directory.",
+    )
+    latest_ann_model = find_latest_ann_model(ann_project_dir)
+    default_ann_model = str(latest_ann_model) if latest_ann_model else ""
+    ann_model_path = st.sidebar.text_input(
+        "ANN checkpoint (.pt)",
+        value=default_ann_model,
+        help="By default StreamGravel uses the newest absolute ANN checkpoint.",
+    )
+    if latest_ann_model:
+        st.sidebar.caption(f"Latest detected model: {latest_ann_model.name}")
+    else:
+        st.sidebar.warning("No .pt model found in the selected ANN project folder.")
+
 # --------------------- ESEMPI SCARICA---------------------
 st.markdown("### 📦 Download here an example file")
 with st.expander("📦 Expand for example"):
@@ -110,8 +134,13 @@ with st.container ():
 
     with col_u2:
         energy_file = st.file_uploader("⚡ Energy bins (MeV)", type="txt")
-        guess_file = st.file_uploader("🧠 Initial guess spectrum", type="txt")
-        is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
+        if initial_guess_type == "From file":
+            guess_file = st.file_uploader("🧠 Initial guess spectrum", type="txt")
+            is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
+        else:
+            guess_file = None
+            is_letargic = False
+            st.caption("No initial-guess file is needed for this mode.")
 
     
 
@@ -126,7 +155,8 @@ if st.sidebar.button("🚀 Load Data"):
     st.session_state.load_matrices_clicked = True
 
 # Ora, solo se i file sono caricati
-if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_file:
+guess_input_ready = initial_guess_type != "From file" or guess_file is not None
+if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_input_ready:
     
     response_tab, fit_tab, spectra_tab = st.tabs(["Response", "Fit", "Spectra"])
     
@@ -135,7 +165,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_response_file' not in st.session_state or response_file != st.session_state.last_response_file or
         'last_counts_file' not in st.session_state or counts_file != st.session_state.last_counts_file or
         'last_energy_file' not in st.session_state or energy_file != st.session_state.last_energy_file or
-        'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file
+        'last_guess_file' not in st.session_state or guess_file != st.session_state.last_guess_file or
+        'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
+        'last_ann_model_path' not in st.session_state or ann_model_path != st.session_state.last_ann_model_path
     )
 
     if file_changed:
@@ -147,6 +179,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_counts_file = counts_file
         st.session_state.last_energy_file = energy_file
         st.session_state.last_guess_file = guess_file
+        st.session_state.last_initial_guess_type = initial_guess_type
+        st.session_state.last_ann_model_path = ann_model_path
         st.session_state.pop("unfolding_outputs", None)
 
     R = st.session_state.R
@@ -205,6 +239,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     # --- Secondo bottone: Run unfolding
     if st.sidebar.button("Run Unfolding"):
         # Filtro matrice e dati
+        data_for_guess = data.copy()
         R = R[selected_detectors, :]
         data = data[selected_detectors,:]
         
@@ -212,22 +247,49 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         energy_file.seek(0)
         energies = np.loadtxt(energy_file, delimiter='\t')
         xbins = energies[:, 2]  # bin centrali
+        figInt = None
+        ann_info = None
     
-        guess_file.seek(0)
-        guess_spect = np.loadtxt(guess_file, delimiter='\t')
-    
-        xbins_guess = guess_spect[:, 0]
-        xguess_raw = guess_spect[:, 1]
+        if initial_guess_type == "From file":
+            guess_file.seek(0)
+            guess_spect = np.loadtxt(guess_file, delimiter='\t')
         
-        if is_letargic:
-            # Conversione da dΦ/dlnE → dΦ/dE
-            xguess_raw = xguess_raw / xbins_guess
+            xbins_guess = guess_spect[:, 0]
+            xguess_raw = guess_spect[:, 1]
 
-        if len(xguess_raw) != R.shape[1]:
-            xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)
-            #d_col2.pyplot(figInt)
+            if is_letargic:
+                # Conversione da dΦ/dlnE → dΦ/dE
+                xguess_raw = xguess_raw / xbins_guess
+
+            if len(xguess_raw) != R.shape[1]:
+                xbins, xguess, figInt = rebin(xbins_guess, xguess_raw,energy_file)
+                #d_col2.pyplot(figInt)
+            else:
+                xguess = xguess_raw
+        elif initial_guess_type == "Neural network":
+            if not ann_model_path:
+                st.error("Select an ANN checkpoint before running the neural-network guess.")
+                st.stop()
+
+            try:
+                ann_guess = predict_absolute_guess(data_for_guess[:, 0], ann_model_path)
+            except Exception as exc:
+                st.error(f"Neural-network guess failed: {exc}")
+                st.stop()
+
+            xbins_guess = ann_guess["energies_mev"]
+            xguess_raw = ann_guess["spectrum_per_mev"]
+            if len(xguess_raw) != R.shape[1] or not np.allclose(xbins_guess, xbins, rtol=1e-3, atol=0.0):
+                xbins, xguess, figInt = rebin(xbins_guess, xguess_raw, energy_file)
+            else:
+                xguess = xguess_raw
+            ann_info = {
+                "model": Path(ann_guess["model_path"]).name,
+                "fluence_total": ann_guess["fluence_total"],
+                "device": ann_guess["device"],
+            }
         else:
-            xguess = xguess_raw
+            xguess = None
 
         m = R.shape[1]
         x_const = np.zeros((m,))
@@ -238,6 +300,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         if initial_guess_type == "Constant":
             xguess = x_const
             suffix = "constant"
+        elif initial_guess_type == "Neural network":
+            suffix = "ann"
         else:
             suffix = "guess"
 
@@ -311,6 +375,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             "log": logIter,
             "integral_guess": integral_fluence_guess,
             "integral_unfolded": integral_fluence_unf,
+            "guess_source": suffix,
+            "ann_info": ann_info,
         }
         
     if 'unfolding_outputs' in st.session_state:
@@ -336,6 +402,13 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             f"Integral fluence - {outputs['algorithm']} [cm-2 s-1]",
             f"{outputs['integral_unfolded']:.4e}"
         )
+        if outputs.get("ann_info"):
+            ann_info = outputs["ann_info"]
+            spectra_tab.caption(
+                "ANN initial guess: "
+                f"{ann_info['model']} on {ann_info['device']} "
+                f"(Phi_tot ANN = {ann_info['fluence_total']:.4e} cm-2 s-1)"
+            )
 
         if outputs["fig_rebin"] is not None:
             with spectra_tab.expander("Rebinning preview"):

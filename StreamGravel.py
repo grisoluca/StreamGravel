@@ -597,11 +597,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         fig_linear, ax_linear = plt.subplots(figsize=(7, 4), layout='constrained')
         if outputs.get("mc_info"):
-            guess_label = "ANN + MC Best Guess Spectrum"
+            guess_label = "ANN+MC Guess"
         elif outputs.get("ann_info"):
-            guess_label = "ANN Guess Spectrum"
+            guess_label = "ANN Guess"
         else:
-            guess_label = "Guess Spectrum"
+            guess_label = "Guess"
+        algorithm_label = outputs["algorithm"].lower()
         ax_linear.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label=guess_label)
         if outputs.get("comparison_guess") is not None:
             ax_linear.step(
@@ -610,9 +611,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 where='mid',
                 color='green',
                 linestyle='--',
-                label="Uploaded Guess Spectrum",
+                label="Uploaded guess",
             )
-        ax_linear.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
+        ax_linear.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=algorithm_label)
         ax_linear.set_xscale("log")
         ax_linear.set_xlabel("Neutron Energy (MeV)")
         ax_linear.set_ylabel("Fluence per unit lethargy (dÎ¦/dE*E) [cm-2 s-1]")
@@ -628,9 +629,9 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 where='mid',
                 color='green',
                 linestyle='--',
-                label="Uploaded Guess Spectrum",
+                label="Uploaded guess",
             )
-        ax_log.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=outputs["algorithm"])
+        ax_log.step(outputs["xbins"], outputs["xg"] * outputs["xbins"], where='mid', color='red', label=algorithm_label)
         ax_log.set_xscale("log")
         ax_log.set_yscale("log")
         ax_log.set_ylim(log_plot_ymin, log_plot_ymax)

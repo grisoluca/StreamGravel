@@ -7,6 +7,7 @@ from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
 from ann_guess import predict_absolute_guess
+from mc_ann_refold import run_mc_ann_refold
 import matplotlib.ticker as ticker
 import io
 
@@ -53,7 +54,7 @@ st.title("Neutron Spectrum Unfolding")
 st.sidebar.header("⚙️ Unfolding parameters")
 initial_guess_type = st.sidebar.selectbox(
     "Initial Guess Spectrum:",
-    ["From file", "Constant", "Neural network"],
+    ["From file", "Constant", "Neural network", "ANN + MC shaking"],
 )
 mmin = st.sidebar.number_input(
     "Min energy [MeV] for constant guess", 
@@ -108,7 +109,12 @@ if log_plot_ymax <= log_plot_ymin:
 ann_uploaded_model = None
 selected_ann_model_path = None
 selected_ann_model_key = ""
-if initial_guess_type == "Neural network":
+mc_n_samples = 400
+mc_sigma_scale = 1.0
+mc_chi_sigma_scale = 1.0
+mc_seed = 42
+mc_uncertainty_is_relative = True
+if initial_guess_type in ("Neural network", "ANN + MC shaking"):
     st.sidebar.markdown("#### Neural-network guess")
     ann_uploaded_model = st.sidebar.file_uploader(
         "Upload ANN checkpoint (.pt)",
@@ -119,6 +125,43 @@ if initial_guess_type == "Neural network":
     selected_ann_model_key = ann_uploaded_model.name if ann_uploaded_model is not None else ""
     if ann_uploaded_model is None:
         st.sidebar.info("Upload a .pt checkpoint to enable the neural-network guess.")
+
+if initial_guess_type == "ANN + MC shaking":
+    st.sidebar.markdown("#### MC shaking")
+    mc_n_samples = st.sidebar.number_input(
+        "MC samples",
+        min_value=10,
+        max_value=10000,
+        value=400,
+        step=10,
+    )
+    mc_sigma_scale = st.sidebar.number_input(
+        "Shaking sigma scale",
+        min_value=0.0,
+        max_value=100.0,
+        value=1.0,
+        step=0.1,
+        format="%.2f",
+    )
+    mc_chi_sigma_scale = st.sidebar.number_input(
+        "Refold chi sigma scale",
+        min_value=1e-12,
+        max_value=100.0,
+        value=1.0,
+        step=0.1,
+        format="%.2f",
+    )
+    mc_seed = st.sidebar.number_input(
+        "MC random seed",
+        min_value=0,
+        max_value=1000000,
+        value=42,
+        step=1,
+    )
+    mc_uncertainty_is_relative = st.sidebar.checkbox(
+        "Counts uncertainty column is relative",
+        value=True,
+    )
 
 # --------------------- ESEMPI SCARICA---------------------
 st.markdown("### 📦 Download here an example file")
@@ -157,13 +200,13 @@ with st.container ():
         if initial_guess_type == "From file":
             guess_file = st.file_uploader("🧠 Initial guess spectrum", type="txt")
             is_letargic = st.checkbox("Guess spectrum per unit lethargy (in dΦ/dE*E)", value=False)
-        elif initial_guess_type == "Neural network":
+        elif initial_guess_type in ("Neural network", "ANN + MC shaking"):
             guess_file = None
             is_letargic = False
             comparison_guess_file = st.file_uploader(
                 "Optional guess spectrum to compare",
                 type="txt",
-                help="This spectrum is plotted only for comparison; GRAVEL still starts from the ANN guess.",
+                help="This spectrum is plotted only for comparison; GRAVEL still starts from the ANN-based guess.",
             )
             comparison_is_letargic = st.checkbox(
                 "Comparison guess per unit lethargy (in dΦ/dE*E)",
@@ -189,12 +232,12 @@ if st.sidebar.button("🚀 Load Data"):
 # Ora, solo se i file sono caricati
 guess_input_ready = (
     (initial_guess_type == "From file" and guess_file is not None)
-    or (initial_guess_type == "Neural network" and ann_uploaded_model is not None)
+    or (initial_guess_type in ("Neural network", "ANN + MC shaking") and ann_uploaded_model is not None)
     or initial_guess_type == "Constant"
 )
 if st.session_state.load_matrices_clicked and response_file and energy_file and counts_file and guess_input_ready:
     
-    response_tab, fit_tab, spectra_tab = st.tabs(["Response", "Fit", "Spectra"])
+    response_tab, fit_tab, spectra_tab, mc_tab = st.tabs(["Response", "Fit", "Spectra", "ANN + MC"])
     
     # Rileva se uno dei file è cambiato
     file_changed = (
@@ -205,7 +248,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_comparison_guess_file' not in st.session_state or comparison_guess_file != st.session_state.last_comparison_guess_file or
         'last_comparison_is_letargic' not in st.session_state or comparison_is_letargic != st.session_state.last_comparison_is_letargic or
         'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
-        'last_ann_model_path' not in st.session_state or selected_ann_model_key != st.session_state.last_ann_model_path
+        'last_ann_model_path' not in st.session_state or selected_ann_model_key != st.session_state.last_ann_model_path or
+        'last_mc_n_samples' not in st.session_state or mc_n_samples != st.session_state.last_mc_n_samples or
+        'last_mc_sigma_scale' not in st.session_state or mc_sigma_scale != st.session_state.last_mc_sigma_scale or
+        'last_mc_chi_sigma_scale' not in st.session_state or mc_chi_sigma_scale != st.session_state.last_mc_chi_sigma_scale or
+        'last_mc_seed' not in st.session_state or mc_seed != st.session_state.last_mc_seed or
+        'last_mc_uncertainty_is_relative' not in st.session_state or mc_uncertainty_is_relative != st.session_state.last_mc_uncertainty_is_relative
     )
 
     if file_changed:
@@ -221,6 +269,11 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_comparison_is_letargic = comparison_is_letargic
         st.session_state.last_initial_guess_type = initial_guess_type
         st.session_state.last_ann_model_path = selected_ann_model_key
+        st.session_state.last_mc_n_samples = mc_n_samples
+        st.session_state.last_mc_sigma_scale = mc_sigma_scale
+        st.session_state.last_mc_chi_sigma_scale = mc_chi_sigma_scale
+        st.session_state.last_mc_seed = mc_seed
+        st.session_state.last_mc_uncertainty_is_relative = mc_uncertainty_is_relative
         st.session_state.pop("unfolding_outputs", None)
 
     R = st.session_state.R
@@ -280,6 +333,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
     if st.sidebar.button("Run Unfolding"):
         # Filtro matrice e dati
         data_for_guess = data.copy()
+        R_for_mc = R.copy()
         R = R[selected_detectors, :]
         data = data[selected_detectors,:]
         
@@ -289,6 +343,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         xbins = energies[:, 2]  # bin centrali
         figInt = None
         ann_info = None
+        mc_info = None
         comparison_guess = None
         comparison_rebin_fig = None
     
@@ -330,6 +385,55 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                     xbins,
                     R.shape[1],
                 )
+        elif initial_guess_type == "ANN + MC shaking":
+            if not selected_ann_model_path:
+                st.error("Upload an ANN checkpoint before running ANN + MC shaking.")
+                st.stop()
+
+            try:
+                mc_result = run_mc_ann_refold(
+                    counts_data=data_for_guess,
+                    model_source=selected_ann_model_path,
+                    response_matrix=R_for_mc,
+                    energy_bins=energies,
+                    selected_detectors=selected_detectors,
+                    n_samples=int(mc_n_samples),
+                    sigma_scale=float(mc_sigma_scale),
+                    chi_sigma_scale=float(mc_chi_sigma_scale),
+                    seed=int(mc_seed),
+                    uncertainty_is_relative=mc_uncertainty_is_relative,
+                )
+            except Exception as exc:
+                st.error(f"ANN + MC shaking failed: {exc}")
+                st.stop()
+
+            xguess = mc_result["best_spectrum_per_mev"]
+            ann_info = {
+                "model": mc_result["model"],
+                "fluence_total": mc_result["ann_fluence_total"],
+                "device": mc_result["device"],
+            }
+            mc_info = {
+                "best_index": mc_result["best_index"],
+                "best_chi2": mc_result["best_chi2"],
+                "median_chi2": mc_result["median_chi2"],
+                "p10_chi2": mc_result["p10_chi2"],
+                "p90_chi2": mc_result["p90_chi2"],
+                "n_samples": int(mc_n_samples),
+                "sigma_scale": float(mc_sigma_scale),
+                "chi_sigma_scale": float(mc_chi_sigma_scale),
+                "seed": int(mc_seed),
+                "uncertainty_is_relative": mc_uncertainty_is_relative,
+                "fig_summary": mc_result["fig_summary"],
+            }
+            if comparison_guess_file is not None:
+                comparison_guess, comparison_rebin_fig = load_guess_spectrum(
+                    comparison_guess_file,
+                    comparison_is_letargic,
+                    energy_file,
+                    xbins,
+                    R.shape[1],
+                )
         else:
             xguess = None
 
@@ -344,6 +448,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             suffix = "constant"
         elif initial_guess_type == "Neural network":
             suffix = "ann"
+        elif initial_guess_type == "ANN + MC shaking":
+            suffix = "ann_mc"
         else:
             suffix = "guess"
 
@@ -425,6 +531,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             "integral_unfolded": integral_fluence_unf,
             "guess_source": suffix,
             "ann_info": ann_info,
+            "mc_info": mc_info,
         }
         
     if 'unfolding_outputs' in st.session_state:
@@ -462,6 +569,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 f"{ann_info['model']} on {ann_info['device']} "
                 f"(Phi_tot ANN = {ann_info['fluence_total']:.4e} cm-2 s-1)"
             )
+        if outputs.get("mc_info"):
+            mc_info = outputs["mc_info"]
+            spectra_tab.caption(
+                "ANN + MC shaking selected best sample "
+                f"#{mc_info['best_index']} with refold J = {mc_info['best_chi2']:.4e}."
+            )
 
         if outputs["fig_rebin"] is not None:
             with spectra_tab.expander("Rebinning preview"):
@@ -471,7 +584,12 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 st.pyplot(outputs["fig_comparison_rebin"], use_container_width=True)
 
         fig_linear, ax_linear = plt.subplots(figsize=(7, 4), layout='constrained')
-        guess_label = "ANN Guess Spectrum" if outputs.get("ann_info") else "Guess Spectrum"
+        if outputs.get("mc_info"):
+            guess_label = "ANN + MC Best Guess Spectrum"
+        elif outputs.get("ann_info"):
+            guess_label = "ANN Guess Spectrum"
+        else:
+            guess_label = "Guess Spectrum"
         ax_linear.step(outputs["xbins"], outputs["xguess"] * outputs["xbins"], where='mid', color='blue', label=guess_label)
         if outputs.get("comparison_guess") is not None:
             ax_linear.step(
@@ -518,9 +636,27 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         csv_str = io.StringIO()
         np.savetxt(csv_str, csv_out, delimiter='\t', header='Energy (MeV)\tUnfolded spectrum (dPhi/dE)', comments='')
         spectra_tab.download_button("Download unfolded spectrum", csv_str.getvalue(), file_name="unfolded_spectrum.txt")
+
+        mc_tab.subheader("ANN + MC shaking")
+        if outputs.get("mc_info"):
+            mc_info = outputs["mc_info"]
+            metric_cols = mc_tab.columns(4)
+            metric_cols[0].metric("Best sample", mc_info["best_index"])
+            metric_cols[1].metric("Best refold J", f"{mc_info['best_chi2']:.4e}")
+            metric_cols[2].metric("Median refold J", f"{mc_info['median_chi2']:.4e}")
+            metric_cols[3].metric("MC samples", mc_info["n_samples"])
+            mc_tab.caption(
+                f"J p10/p90 = {mc_info['p10_chi2']:.4e} / {mc_info['p90_chi2']:.4e}; "
+                f"shake scale = {mc_info['sigma_scale']:.2f}; "
+                f"chi sigma scale = {mc_info['chi_sigma_scale']:.2f}; seed = {mc_info['seed']}."
+            )
+            mc_tab.pyplot(mc_info["fig_summary"], use_container_width=True)
+        else:
+            mc_tab.info("Select ANN + MC shaking and run unfolding to show MC refold diagnostics.")
     else:
         fit_tab.info("Run unfolding to show fit quality and iteration log.")
         spectra_tab.info("Run unfolding to show spectrum results.")
+        mc_tab.info("Run ANN + MC shaking to show Monte Carlo refold diagnostics.")
 
 
 else:

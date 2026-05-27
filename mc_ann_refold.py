@@ -24,6 +24,16 @@ def _log_interp_positive(x_new, x_old, y_old):
     return np.power(10.0, log_y)
 
 
+def make_log_bin_edges(energies):
+    energies = np.asarray(energies, dtype=np.float64)
+    log_centers = np.log10(energies)
+    log_edges = np.empty(len(energies) + 1, dtype=np.float64)
+    log_edges[1:-1] = 0.5 * (log_centers[:-1] + log_centers[1:])
+    log_edges[0] = log_centers[0] - 0.5 * (log_centers[1] - log_centers[0])
+    log_edges[-1] = log_centers[-1] + 0.5 * (log_centers[-1] - log_centers[-2])
+    return np.power(10.0, log_edges)
+
+
 def _load_absolute_checkpoint(torch, model_source, device):
     if hasattr(model_source, "seek"):
         model_source.seek(0)
@@ -78,8 +88,11 @@ def _predict_absolute_batch(counts_batch, model_source):
     spectra_per_mev = spectra_per_eV * 1.0e6
 
     return {
+        "energies_eV": energies_eV,
         "energies_mev": energies_eV / 1.0e6,
+        "spectra_per_eV": spectra_per_eV,
         "spectra_per_mev": spectra_per_mev,
+        "lethargy_eV": spectra_per_eV * energies_eV[None, :],
         "lethargy": spectra_per_mev * (energies_eV[None, :] / 1.0e6),
         "fluence_total": pred_phi_total,
         "device": device,
@@ -108,6 +121,7 @@ def run_mc_ann_refold(
     chi_sigma_scale,
     seed,
     uncertainty_is_relative=True,
+    plot_top=20,
 ):
     counts_data = np.asarray(counts_data, dtype=np.float64)
     response_matrix = np.asarray(response_matrix, dtype=np.float64)
@@ -152,13 +166,14 @@ def run_mc_ann_refold(
     best_idx = int(np.argmin(chi2))
 
     fig = plot_mc_refold_summary(
-        xbins,
+        prediction["energies_eV"],
         counts[score_detectors],
         sigma_abs[score_detectors],
         folded_counts[:, score_detectors],
-        spectra_on_grid,
+        prediction["lethargy_eV"],
         chi2,
         best_idx,
+        plot_top,
     )
 
     return {
@@ -181,42 +196,54 @@ def run_mc_ann_refold(
     }
 
 
-def plot_mc_refold_summary(xbins, measured_counts, sigma_abs, folded_counts, spectra_on_grid, chi2, best_idx):
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5), layout="constrained")
+def plot_mc_refold_summary(
+    energies_eV,
+    measured_counts,
+    sigma_abs,
+    folded_counts,
+    pred_leth_abs,
+    chi2,
+    best_idx,
+    n_show,
+):
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
 
     x_det = np.arange(1, len(measured_counts) + 1)
     axes[0].errorbar(x_det, measured_counts, yerr=sigma_abs, fmt="o", color="black", label="Measured")
-    axes[0].plot(x_det, folded_counts[best_idx], "s-", color="tab:blue", label=f"Best refold J={chi2[best_idx]:.3g}")
+    axes[0].plot(x_det, folded_counts[best_idx], "s-", label=f"Best refold chi2={chi2[best_idx]:.3g}")
     axes[0].fill_between(
         x_det,
         np.percentile(folded_counts, 16, axis=0),
         np.percentile(folded_counts, 84, axis=0),
         alpha=0.2,
-        color="tab:blue",
         label="MC refold 16-84%",
     )
-    axes[0].set_xlabel("Selected detector index")
+    axes[0].set_xlabel("Detector index")
     axes[0].set_ylabel("Counts")
     axes[0].grid(True, alpha=0.3)
     axes[0].legend()
 
-    lethargy = spectra_on_grid * xbins[None, :]
+    order = np.argsort(chi2)
+    chosen = order[: min(n_show, len(order))]
+    edges = make_log_bin_edges(energies_eV)
+
     axes[1].fill_between(
-        xbins,
-        np.percentile(lethargy, 16, axis=0),
-        np.percentile(lethargy, 84, axis=0),
+        energies_eV,
+        np.percentile(pred_leth_abs, 16, axis=0),
+        np.percentile(pred_leth_abs, 84, axis=0),
         step="mid",
         alpha=0.25,
-        color="tab:orange",
         label="ANN MC 16-84%",
     )
-    axes[1].step(xbins, lethargy[best_idx], where="mid", color="black", linewidth=2.0, label="Best MC guess")
+    for idx in chosen:
+        axes[1].stairs(pred_leth_abs[idx], edges, alpha=0.35, linewidth=1.0)
+    axes[1].stairs(pred_leth_abs[best_idx], edges, color="black", linewidth=2.4, label="Best")
     axes[1].set_xscale("log")
-    axes[1].set_yscale("log")
-    axes[1].set_xlabel("Neutron Energy [MeV]")
-    axes[1].set_ylabel("Fluence per unit lethargy")
+    axes[1].set_xlabel("Energy [eV]")
+    axes[1].set_ylabel(r"Absolute lethargy $E \cdot \phi(E)$ [cm$^{-2}$ s$^{-1}$]")
     axes[1].grid(True, which="both", alpha=0.3)
     axes[1].legend()
 
-    fig.suptitle("ANN + MC shaking with response refold selection")
+    fig.suptitle("Monte Carlo ANN unfolding + RF refold selection", fontweight="bold")
+    fig.tight_layout()
     return fig

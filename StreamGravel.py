@@ -113,6 +113,7 @@ mc_n_samples = 400
 mc_sigma_scale = 1.0
 mc_chi_sigma_scale = 1.0
 mc_seed = 42
+mc_plot_top = 20
 mc_uncertainty_is_relative = True
 if initial_guess_type in ("Neural network", "ANN + MC shaking"):
     st.sidebar.markdown("#### Neural-network guess")
@@ -156,6 +157,13 @@ if initial_guess_type == "ANN + MC shaking":
         min_value=0,
         max_value=1000000,
         value=42,
+        step=1,
+    )
+    mc_plot_top = st.sidebar.number_input(
+        "MC spectra shown",
+        min_value=1,
+        max_value=200,
+        value=20,
         step=1,
     )
     mc_uncertainty_is_relative = st.sidebar.checkbox(
@@ -253,6 +261,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_mc_sigma_scale' not in st.session_state or mc_sigma_scale != st.session_state.last_mc_sigma_scale or
         'last_mc_chi_sigma_scale' not in st.session_state or mc_chi_sigma_scale != st.session_state.last_mc_chi_sigma_scale or
         'last_mc_seed' not in st.session_state or mc_seed != st.session_state.last_mc_seed or
+        'last_mc_plot_top' not in st.session_state or mc_plot_top != st.session_state.last_mc_plot_top or
         'last_mc_uncertainty_is_relative' not in st.session_state or mc_uncertainty_is_relative != st.session_state.last_mc_uncertainty_is_relative
     )
 
@@ -273,6 +282,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_mc_sigma_scale = mc_sigma_scale
         st.session_state.last_mc_chi_sigma_scale = mc_chi_sigma_scale
         st.session_state.last_mc_seed = mc_seed
+        st.session_state.last_mc_plot_top = mc_plot_top
         st.session_state.last_mc_uncertainty_is_relative = mc_uncertainty_is_relative
         st.session_state.pop("unfolding_outputs", None)
 
@@ -402,6 +412,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                     chi_sigma_scale=float(mc_chi_sigma_scale),
                     seed=int(mc_seed),
                     uncertainty_is_relative=mc_uncertainty_is_relative,
+                    plot_top=int(mc_plot_top),
                 )
             except Exception as exc:
                 st.error(f"ANN + MC shaking failed: {exc}")
@@ -423,6 +434,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
                 "sigma_scale": float(mc_sigma_scale),
                 "chi_sigma_scale": float(mc_chi_sigma_scale),
                 "seed": int(mc_seed),
+                "plot_top": int(mc_plot_top),
                 "uncertainty_is_relative": mc_uncertainty_is_relative,
                 "fig_summary": mc_result["fig_summary"],
             }
@@ -648,7 +660,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             mc_tab.caption(
                 f"J p10/p90 = {mc_info['p10_chi2']:.4e} / {mc_info['p90_chi2']:.4e}; "
                 f"shake scale = {mc_info['sigma_scale']:.2f}; "
-                f"chi sigma scale = {mc_info['chi_sigma_scale']:.2f}; seed = {mc_info['seed']}."
+                f"chi sigma scale = {mc_info['chi_sigma_scale']:.2f}; "
+                f"shown spectra = {mc_info['plot_top']}; seed = {mc_info['seed']}."
             )
             mc_tab.pyplot(mc_info["fig_summary"], use_container_width=True)
         else:

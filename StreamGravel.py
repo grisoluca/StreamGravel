@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from gravel import gravel
+from gravel_old import gravel_old
 from mlem import mlem
 from rebin import rebin
 from response_matrix import response_matrix
@@ -70,7 +71,10 @@ mmax = st.sidebar.number_input(
     value=1.0, 
     step=1e1, 
     format="%.1e")
-unfolding_type = st.sidebar.selectbox("Unfolding algorithm:", ["Gravel", "MLEM"])
+unfolding_type = st.sidebar.selectbox(
+    "Unfolding algorithm:",
+    ["Gravel", "GRAVEL_old", "MLEM"],
+)
 tol = st.sidebar.number_input(
     "🔍 Reduced chi-squared value to stop iterations",
     min_value=1e-12, 
@@ -467,6 +471,15 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
 
         if unfolding_type == "Gravel":
             xg, errorg, figC, logIter = gravel(R, data, xguess.copy(), tol, energy_file,max_iter)
+        elif unfolding_type == "GRAVEL_old":
+            xg, errorg, figC, logIter = gravel_old(
+                R,
+                data,
+                xguess.copy(),
+                tol,
+                energy_file,
+                max_iter,
+            )
         else:
             xg, errorg, figC, logIter = mlem(R, data, xguess.copy(), tol, energy_file,max_iter)
         
@@ -534,6 +547,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             "fig_comparison_rebin": comparison_rebin_fig,
             "fig_chi": figJ,
             "xbins": xbins,
+            "dE": dE,
             "xguess": xguess_norm,
             "comparison_guess": comparison_guess,
             "xg": xg,
@@ -643,6 +657,52 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         spectrum_col1, spectrum_col2 = spectra_tab.columns(2)
         spectrum_col1.pyplot(fig_linear, use_container_width=True)
         spectrum_col2.pyplot(fig_log, use_container_width=True)
+
+        with spectra_tab.expander("Normalized spectrum comparison"):
+            output_dE = outputs.get("dE")
+            if output_dE is None:
+                st.info("Run unfolding again to generate the normalized comparison.")
+            else:
+                guess_area = np.sum(outputs["xguess"] * output_dE)
+                unfolded_area = np.sum(outputs["xg"] * output_dE)
+                if guess_area <= 0.0 or unfolded_area <= 0.0:
+                    st.warning("The spectra cannot be normalized because an integral is not positive.")
+                else:
+                    fig_normalized, ax_normalized = plt.subplots(
+                        figsize=(9, 5),
+                        layout="constrained",
+                    )
+                    ax_normalized.step(
+                        outputs["xbins"],
+                        outputs["xguess"] / guess_area * outputs["xbins"],
+                        where="mid",
+                        color="blue",
+                        label=guess_label,
+                    )
+                    if outputs.get("comparison_guess") is not None:
+                        comparison_area = np.sum(outputs["comparison_guess"] * output_dE)
+                        if comparison_area > 0.0:
+                            ax_normalized.step(
+                                outputs["xbins"],
+                                outputs["comparison_guess"] / comparison_area * outputs["xbins"],
+                                where="mid",
+                                color="green",
+                                linestyle="--",
+                                label="Uploaded guess",
+                            )
+                    ax_normalized.step(
+                        outputs["xbins"],
+                        outputs["xg"] / unfolded_area * outputs["xbins"],
+                        where="mid",
+                        color="red",
+                        label=algorithm_label,
+                    )
+                    ax_normalized.set_xscale("log")
+                    ax_normalized.set_xlabel("Neutron Energy (MeV)")
+                    ax_normalized.set_ylabel("Normalized fluence per unit lethargy")
+                    ax_normalized.grid(True, which="both", ls="--", alpha=0.35)
+                    ax_normalized.legend()
+                    st.pyplot(fig_normalized, use_container_width=True)
 
         spectra_tab.markdown("### Results Download")
         csv_out = np.column_stack((outputs["xbins"], outputs["xg"]))

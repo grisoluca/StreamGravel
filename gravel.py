@@ -2,7 +2,7 @@ import numpy as np
 from numpy import log,exp
 import matplotlib.pyplot as plt
 
-def gravel(R,data,x,tolerance,energy_file,max_iter):
+def gravel(R,data,x,tolerance,energy_file,max_iter, make_plot=True):
     """
     R --> Response matrix, shape is (n,m)
     N --> data from each detector, shape is (n,)
@@ -92,11 +92,13 @@ def gravel(R,data,x,tolerance,energy_file,max_iter):
     #with st.expander("📘 Iteration log"):
      #   st.text_area("Output GRAVEL", logIter, height=300)    
     
-    figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
-    axC.plot(meas, label="measured")
-    axC.plot(rdot, label="evaluated")
-    axC.set_ylabel("Counts")
-    axC.legend()
+    figC = None
+    if make_plot:
+        figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
+        axC.plot(meas, label="measured")
+        axC.plot(rdot, label="evaluated")
+        axC.set_ylabel("Counts")
+        axC.legend()
     #col.pyplot(figC)
 
     return(x,np.array(error),figC,logIter)

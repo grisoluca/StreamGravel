@@ -3,7 +3,7 @@ from numpy import exp, log
 import matplotlib.pyplot as plt
 
 
-def gravel_old(R, data, x, tolerance, energy_file, max_iter):
+def gravel_old(R, data, x, tolerance, energy_file, max_iter, make_plot=True):
     """Historical GRAVEL update with measured counts inside the weights."""
     x = x.copy()
     eps = 1e-300
@@ -47,10 +47,12 @@ def gravel_old(R, data, x, tolerance, energy_file, max_iter):
         stepcount += 1
         J0 = J
 
-    fig_counts, ax_counts = plt.subplots(figsize=(6, 4), layout="constrained")
-    ax_counts.plot(meas, label="measured")
-    ax_counts.plot(rdot, label="evaluated")
-    ax_counts.set_ylabel("Counts")
-    ax_counts.legend()
+    fig_counts = None
+    if make_plot:
+        fig_counts, ax_counts = plt.subplots(figsize=(6, 4), layout="constrained")
+        ax_counts.plot(meas, label="measured")
+        ax_counts.plot(rdot, label="evaluated")
+        ax_counts.set_ylabel("Counts")
+        ax_counts.legend()
 
     return x, np.asarray(error), fig_counts, log_iter

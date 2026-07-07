@@ -9,6 +9,7 @@ from rebin import rebin
 from response_matrix import response_matrix
 from ann_guess import predict_absolute_guess
 from mc_ann_refold import run_mc_ann_refold
+from fluence_uncertainty import estimate_integral_fluence_uncertainty
 import matplotlib.ticker as ticker
 import io
 
@@ -89,6 +90,25 @@ max_iter = st.sidebar.number_input(
     max_value=1000000, 
     value=100, 
     step=1
+)
+st.sidebar.markdown("#### Integral fluence uncertainty")
+fluence_uncertainty_samples = st.sidebar.number_input(
+    "Count-MC replicas",
+    min_value=0,
+    max_value=1000,
+    value=50,
+    step=10,
+    help=(
+        "Propagates measured-count uncertainties to the unfolded integral "
+        "fluence. Set to 0 to disable."
+    ),
+)
+fluence_uncertainty_seed = st.sidebar.number_input(
+    "Count-MC random seed",
+    min_value=0,
+    max_value=1000000,
+    value=12345,
+    step=1,
 )
 log_plot_ymin = st.sidebar.number_input(
     "Log-log plot y min",
@@ -260,6 +280,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         'last_comparison_guess_file' not in st.session_state or comparison_guess_file != st.session_state.last_comparison_guess_file or
         'last_comparison_is_letargic' not in st.session_state or comparison_is_letargic != st.session_state.last_comparison_is_letargic or
         'last_initial_guess_type' not in st.session_state or initial_guess_type != st.session_state.last_initial_guess_type or
+        'last_fluence_uncertainty_samples' not in st.session_state or fluence_uncertainty_samples != st.session_state.last_fluence_uncertainty_samples or
+        'last_fluence_uncertainty_seed' not in st.session_state or fluence_uncertainty_seed != st.session_state.last_fluence_uncertainty_seed or
         'last_ann_model_path' not in st.session_state or selected_ann_model_key != st.session_state.last_ann_model_path or
         'last_mc_n_samples' not in st.session_state or mc_n_samples != st.session_state.last_mc_n_samples or
         'last_mc_sigma_scale' not in st.session_state or mc_sigma_scale != st.session_state.last_mc_sigma_scale or
@@ -281,6 +303,8 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         st.session_state.last_comparison_guess_file = comparison_guess_file
         st.session_state.last_comparison_is_letargic = comparison_is_letargic
         st.session_state.last_initial_guess_type = initial_guess_type
+        st.session_state.last_fluence_uncertainty_samples = fluence_uncertainty_samples
+        st.session_state.last_fluence_uncertainty_seed = fluence_uncertainty_seed
         st.session_state.last_ann_model_path = selected_ann_model_key
         st.session_state.last_mc_n_samples = mc_n_samples
         st.session_state.last_mc_sigma_scale = mc_sigma_scale
@@ -501,6 +525,21 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         integral_fluence_comparison = (
             np.sum(comparison_guess * dE) if comparison_guess is not None else None
         )
+        fluence_uncertainty = None
+        if int(fluence_uncertainty_samples) > 1:
+            with st.spinner("Estimating integral fluence uncertainty from count replicas..."):
+                fluence_uncertainty = estimate_integral_fluence_uncertainty(
+                    unfolding_type,
+                    R,
+                    data,
+                    xguess,
+                    tol,
+                    energy_file,
+                    int(max_iter),
+                    dE,
+                    n_samples=int(fluence_uncertainty_samples),
+                    seed=int(fluence_uncertainty_seed),
+                )
 
         # evita divisioni per zero
         xguess_norm = xguess
@@ -555,6 +594,7 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             "integral_guess": integral_fluence_guess,
             "integral_comparison": integral_fluence_comparison,
             "integral_unfolded": integral_fluence_unf,
+            "integral_uncertainty": fluence_uncertainty,
             "guess_source": suffix,
             "ann_info": ann_info,
             "mc_info": mc_info,
@@ -579,9 +619,15 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
         spectra_tab.subheader("Spectrum results")
         flu_col1, flu_col2, flu_col3 = spectra_tab.columns(3)
         flu_col1.metric("Integral fluence - Guess [cm-2 s-1]", f"{outputs['integral_guess']:.4e}")
+        fluence_unc = outputs.get("integral_uncertainty")
+        fluence_delta = None
+        if fluence_unc is not None and np.isfinite(fluence_unc.get("std", np.nan)):
+            fluence_delta = f"+/- {fluence_unc['std']:.2e}"
         flu_col2.metric(
             f"Integral fluence - {outputs['algorithm']} [cm-2 s-1]",
-            f"{outputs['integral_unfolded']:.4e}"
+            f"{outputs['integral_unfolded']:.4e}",
+            delta=fluence_delta,
+            delta_color="off",
         )
         if outputs.get("integral_comparison") is not None:
             flu_col3.metric(
@@ -600,6 +646,16 @@ if st.session_state.load_matrices_clicked and response_file and energy_file and 
             spectra_tab.caption(
                 "ANN + MC shaking selected best sample "
                 f"#{mc_info['best_index']} with refold J = {mc_info['best_chi2']:.4e}."
+            )
+        if fluence_unc is not None:
+            spectra_tab.caption(
+                "Integral fluence uncertainty: "
+                f"1-sigma = {fluence_unc['std']:.4e} cm-2 s-1 "
+                f"({fluence_unc['rel_std'] * 100:.2f}%), "
+                f"16-84% = [{fluence_unc['p16']:.4e}, {fluence_unc['p84']:.4e}], "
+                f"{fluence_unc['n_success']}/{fluence_unc['n_requested']} replicas. "
+                "This propagates count uncertainties only; response-matrix and guess-systematic "
+                "uncertainties are not included."
             )
 
         if outputs["fig_rebin"] is not None:

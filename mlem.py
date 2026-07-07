@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def mlem(R, data, x, tolerance, energy_file,max_iter):
+def mlem(R, data, x, tolerance, energy_file,max_iter, make_plot=True):
     x = x.copy()
     eps = 1e-300
     n, m = R.shape
@@ -54,9 +54,11 @@ def mlem(R, data, x, tolerance, energy_file,max_iter):
         stepcount += 1
         J0 = J
 
-    figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
-    axC.plot(meas, label="measured")
-    axC.plot(rdot, label="evaluated")
-    axC.legend()
+    figC = None
+    if make_plot:
+        figC, axC = plt.subplots(figsize=(6, 4), layout='constrained')
+        axC.plot(meas, label="measured")
+        axC.plot(rdot, label="evaluated")
+        axC.legend()
 
     return x, np.array(error), figC, logIter
